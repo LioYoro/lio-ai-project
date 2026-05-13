@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: api
+    runtime: docker
+    region: oregon
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: SUPABASE_URL
+        scope: run
+      - key: SUPABASE_ANON_KEY
+        scope: run
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        scope: run
+      - key: DATABASE_URL
+        scope: run
+      - key: UPSTASH_REDIS_REST_URL
+        scope: run
+      - key: UPSTASH_REDIS_REST_TOKEN
+        scope: run
+      - key: GEMINI_API_KEY
+        scope: run
+      - key: JWT_SECRET
+        scope: run
+      - key: CORS_ORIGINS
+        scope: run
+        value: "https://your-frontend.vercel.app"
