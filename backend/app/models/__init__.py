@@ -2,6 +2,7 @@ from sqlalchemy import Column, String, Integer, DateTime, Text, Enum, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
+from pgvector.sqlalchemy import Vector
 import uuid
 
 
@@ -35,8 +36,8 @@ class Document(Base):
     extracted_data = Column(JSON)  # Structured extraction {name, date, amounts, etc}
     confidence_score = Column(Float)  # Confidence of extraction (0-1)
     
-    # Vector embedding for semantic search
-    embedding = Column(JSON)  # Stored as JSON list
+    # Vector embedding for semantic search (384-dimensional from MiniLM)
+    embedding = Column(Vector(384))  # pgvector column
     
     # Status
     status = Column(String, default="pending")  # pending, processing, completed, failed
