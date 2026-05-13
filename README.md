@@ -128,7 +128,7 @@ An AI-powered document processing system that ingests scanned documents/PDFs, ex
 - [ ] README with screenshots + architecture diagram
 
 ---
-
+<!--
 ## Environment Configuration
 
 ### Backend (.env)
@@ -152,7 +152,7 @@ VITE_API_URL=http://localhost:8001
 ```
 
 ---
-
+-->
 ## How to Run Locally
 
 ### Backend
