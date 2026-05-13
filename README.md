@@ -6,7 +6,7 @@ An AI-powered document processing system that ingests scanned documents/PDFs, ex
 
 ## Project Status: In Progress
 
-**Last Updated:** May 13, 2026
+**Last Updated:** May 14, 2026
 
 ---
 
@@ -39,11 +39,11 @@ An AI-powered document processing system that ingests scanned documents/PDFs, ex
 |-------|------------|--------|
 | Frontend | React + Vite + TypeScript + Tailwind | ✅ Done |
 | Backend | Python + FastAPI + SQLAlchemy | ✅ Done |
-| Database | PostgreSQL (Supabase) + Auth | ✅ Done |
+| Database | PostgreSQL (Supabase) + Auth + pgvector | ✅ Done |
 | OCR | Tesseract (images), PyMuPDF (PDFs) | ✅ Done |
 | Queue | Redis (Upstash) + fallback sync | ⚠️ Fallback active |
-| LLM | Gemini API (extraction) | ⏳ Phase 3 |
-| Search | Semantic (pgvector) | ⏳ Phase 4 |
+| LLM | Gemini 2.5 Flash (document extraction) | ✅ Done |
+| Search | Semantic (pgvector + MiniLM) | ✅ Done |
 
 ---
 
@@ -119,38 +119,44 @@ An AI-powered document processing system that ingests scanned documents/PDFs, ex
 
 ---
 
-### ⏳ Phase 4: Semantic Search (Days 8-10) — NOT STARTED
+### ✅ Phase 4: Semantic Search (Days 8-10) — COMPLETED
 
-**Note:** Uses **MiniLM** (HuggingFace sentence-transformers) for embeddings - free, unlimited, no API rate limits.
+- [x] Create embedding service with MiniLM (`all-MiniLM-L6-v2`, 384-dim vectors)
+- [x] Enable pgvector extension in Supabase
+- [x] Generate embeddings for existing documents
+- [x] Store embeddings in pgvector column with proper type registration
+- [x] Vector similarity search using pgvector cosine distance
+- [x] Frontend: search bar (MiniLM only, no model selector)
+- [x] Frontend: search results with relevance score + visual progress bar
+- [x] Dashboard document stats endpoint
 
-**Remaining tasks:**
-- [ ] Create embedding service with MiniLM (`all-MiniLM-L6-v2`)
-- [ ] Enable pgvector extension in Supabase
-- [ ] Generate embeddings on document upload/OCR completion
-- [ ] Store embeddings in pgvector column (Supabase)
-- [ ] Vector similarity search using cosine distance
-- [ ] Frontend: search bar with model selector (MiniLM / Gemini Embedding)
-- [ ] Frontend: search results with relevance score
+**Key Decisions:**
+- MiniLM is the sole embedding model (free, unlimited, no API calls)
+- Filename match boost (+0.3) prioritizes keyword-relevant results
+- Embeddings generated one doc at a time to avoid silent batch failures
+- pgvector type registered per-connection via SQLAlchemy event listener
 
-**Rate Limits:**
-| Model | RPM | RPD |
-|-------|-----|-----|
-| MiniLM (local) | ∞ | ∞ |
-| Gemini Embedding-001 | 100 | 1000 |
+**Endpoints:**
+- `POST /api/search/semantic` — Search with query text, returns ranked results
+- `POST /api/search/generate-embeddings` — Generate embeddings for docs without them
 
 ---
 
-### ⏳ Phase 5: Workflow + Polish (Days 11-14) — NOT STARTED
+### ⏳ Phase 5: Workflow + Polish (Days 11-14) — IN PROGRESS
 
-**Remaining tasks:**
+**Completed:**
+- [x] Dashboard stats: total docs, completed, failed counts
+- [x] Document delete functionality
+- [x] Document pagination (10 per page with Previous/Next)
+- [x] Error handling and loading states across app
+- [x] README with architecture diagram + current status
+
+**Remaining:**
 - [ ] Document status workflow (pending → processing → review → approved/rejected)
 - [ ] Simple approve/reject action
 - [ ] Audit log (who did what, when, on which document)
-- [ ] Dashboard stats: total docs, pending, recent activity
 - [ ] Upload document type selector (user declares type)
-- [ ] Document delete functionality
-- [ ] Error handling and loading states across app
-- [ ] README with screenshots + architecture diagram
+- [ ] Push to GitHub and deploy to Render + Vercel
 
 ---
 <!--
@@ -200,10 +206,14 @@ npm run dev
 
 ## Current Issues / Notes
 
-1. **Upstash Redis:** Connection fails, falls back to synchronous processing (works fine)
+1. **Upstash Redis:** Connection may fail, falls back to synchronous processing (works fine)
 2. **Tesseract:** Installed at `C:\Program Files\Tesseract-OCR\tesseract.exe`
 3. **CV2 Preprocessing:** Disabled - raw image gives better OCR results
-4. **Post-processing:** Skipped - will handle in Phase 3 with Gemini LLM
+4. **Gemini Rate Limit:** 20 requests/day free tier — 2 calls per document (classification + extraction)
+5. **MiniLM Startup:** ~5-10s cold start on first import (model loads into memory)
+6. **Frontend Auth Token:** Uses `sb-access-token` (not `access_token`) in localStorage
+7. **Backend Port:** 8001, Frontend Port: 5173
+8. **Git Status:** 9 commits ahead of `origin/main`, working tree clean
 
 ---
 
@@ -212,10 +222,11 @@ npm run dev
 | Skill | Evidence |
 |-------|----------|
 | Full-stack dev | React frontend + FastAPI backend |
-| AI/LLM integration | Phase 3 (upcoming) |
-| OCR pipeline | Tesseract + PyMuPDF |
-| Async processing | ARQ + Redis background workers |
-| Database design | SQLAlchemy ORM with RLS |
+| AI/LLM integration | Gemini 2.5 Flash document classification + field extraction |
+| OCR pipeline | Tesseract + PyMuPDF with confidence scoring |
+| Async processing | ARQ + Redis background workers with sync fallback |
+| Vector search | pgvector semantic search with MiniLM embeddings |
+| Database design | SQLAlchemy ORM with RLS policies + pgvector |
 | Auth/security | Supabase Auth with RLS policies |
 | Cloud deployment | Ready for Vercel + Render |
 
@@ -223,10 +234,9 @@ npm run dev
 
 ## Next Steps
 
-1. Implement Phase 3: AI Extraction with Gemini API
-2. Extract structured fields from OCR text
-3. Classify document types automatically
-4. Proceed to Phase 4: Semantic Search with pgvector
+1. Push 9 commits to GitHub (`git push origin main`)
+2. Deploy backend to Render + frontend to Vercel
+3. Phase 5: Document workflow (approve/reject), audit log, upload type selector
 
 ---
 
