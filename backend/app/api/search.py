@@ -52,7 +52,7 @@ def semantic_search(
                 d.filename,
                 d.file_type,
                 d.raw_text,
-                (1 - (d.embedding <=> :query_embedding::vector)) as relevance_score
+                (1 - (d.embedding <=> CAST(:query_embedding AS vector))) as relevance_score
             FROM documents d
             WHERE d.owner_id = :user_id AND d.embedding IS NOT NULL
             ORDER BY relevance_score DESC
