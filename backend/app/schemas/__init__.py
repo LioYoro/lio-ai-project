@@ -49,8 +49,12 @@ class DocumentResponse(BaseModel):
 class DocumentListResponse(BaseModel):
     id: str
     filename: str
+    file_type: Optional[str] = None
     status: str
+    raw_text: Optional[str] = None
+    confidence_score: Optional[float] = None
     created_at: datetime
+    updated_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True

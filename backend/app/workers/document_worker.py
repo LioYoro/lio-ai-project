@@ -1,0 +1,128 @@
+import asyncio
+import logging
+from datetime import datetime
+from arq import create_pool
+from arq.connections import RedisSettings
+
+from app.config import settings
+from app.database import SessionLocal
+from app.models import Document
+from app.services.ocr_service import extract_text
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+class WorkerSettings:
+    redis_settings = RedisSettings(
+        host=settings.UPSTASH_REDIS_REST_URL.replace("https://", "").split("/")[0].split(":")[0],
+        port=443,
+        password=settings.UPSTASH_REDIS_REST_TOKEN,
+        ssl=True
+    )
+
+
+async def process_document_task(document_id: str) -> dict:
+    """
+    ARQ task to process a document with OCR
+    """
+    logger.info(f"Starting OCR processing for document: {document_id}")
+    
+    db = SessionLocal()
+    
+    try:
+        # Get document
+        document = db.query(Document).filter(Document.id == document_id).first()
+        
+        if not document:
+            logger.error(f"Document not found: {document_id}")
+            return {"error": "Document not found"}
+        
+        # Update status to processing
+        document.status = "processing"
+        document.updated_at = datetime.utcnow()
+        db.commit()
+        
+        # Check if file exists
+        import os
+        if not os.path.exists(document.file_path):
+            document.status = "failed"
+            document.error_message = "File not found"
+            db.commit()
+            return {"error": "File not found"}
+        
+        # Run OCR
+        logger.info(f"Running OCR on: {document.file_path}")
+        text, confidence, method = extract_text(document.file_path)
+        
+        if text:
+            # Update document with OCR results
+            document.raw_text = text
+            document.confidence_score = confidence
+            document.status = "completed"
+            document.updated_at = datetime.utcnow()
+            logger.info(f"OCR completed for {document_id}: method={method}, confidence={confidence:.2f}")
+        else:
+            document.status = "failed"
+            document.error_message = f"OCR failed: no text extracted"
+            logger.error(f"OCR failed for {document_id}: no text extracted")
+        
+        db.commit()
+        
+        return {
+            "document_id": document_id,
+            "status": document.status,
+            "method": method if text else None,
+            "confidence": confidence if text else None,
+            "text_length": len(text) if text else 0
+        }
+        
+    except Exception as e:
+        logger.error(f"Error processing document {document_id}: {e}")
+        
+        # Update document status to failed
+        document = db.query(Document).filter(Document.id == document_id).first()
+        if document:
+            document.status = "failed"
+            document.error_message = str(e)
+            document.updated_at = datetime.utcnow()
+            db.commit()
+        
+        return {"error": str(e)}
+        
+    finally:
+        db.close()
+
+
+async def enqueue_document_processing(document_id: str):
+    """
+    Add document processing task to the queue
+    """
+    try:
+        # Parse Upstash URL to get connection details
+        redis_url = settings.UPSTASH_REDIS_REST_URL
+        
+        # Create ARQ pool and enqueue task
+        pool = await create_pool(RedisSettings(
+            host=redis_url.replace("https://", "").split("/")[0].split(":")[0],
+            port=443,
+            password=settings.UPSTASH_REDIS_REST_TOKEN,
+            ssl=True
+        ))
+        
+        await pool.enqueue_job(
+            "process_document_task",
+            document_id,
+            _job_id=f"doc_{document_id}"
+        )
+        
+        await pool.close()
+        
+        logger.info(f"Enqueued document {document_id} for processing")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to enqueue document {document_id}: {e}")
+        # Fallback: run synchronously
+        logger.info("Falling back to synchronous processing")
+        return await process_document_task(document_id)

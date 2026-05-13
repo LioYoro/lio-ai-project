@@ -18,7 +18,7 @@ const queryClient = new QueryClient({
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const isLoggedIn = !!localStorage.getItem("access_token");
+  const isLoggedIn = !!localStorage.getItem("sb-access-token");
   return isLoggedIn ? <>{children}</> : <Navigate to="/login" />;
 };
 

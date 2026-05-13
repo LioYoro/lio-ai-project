@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
@@ -9,18 +9,28 @@ export const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const navigate = useNavigate();
   const { login } = useAuth();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (localStorage.getItem("sb-access-token")) {
+      window.location.href = "/documents";
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
+    console.log("Attempting login with:", email);
+    
     try {
-      await login.mutateAsync({ email, password });
-      navigate("/documents");
+      const result = await login.mutateAsync({ email, password });
+      console.log("Login success:", result);
+      window.location.href = "/documents";
     } catch (err: any) {
-      setError(err.response?.data?.detail || "Login failed");
+      console.error("Login error:", err);
+      setError(err.response?.data?.detail || err.message || "Login failed");
     }
   };
 

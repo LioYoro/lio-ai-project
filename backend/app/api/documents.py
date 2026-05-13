@@ -4,8 +4,10 @@ from app.database import get_db
 from app.models import User, Document
 from app.schemas import DocumentResponse, DocumentListResponse
 from app.dependencies import get_current_user
+from app.workers.document_worker import enqueue_document_processing
 from pathlib import Path
 import shutil
+import asyncio
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
 
@@ -20,7 +22,7 @@ async def upload_document(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Upload a document"""
+    """Upload a document and trigger OCR processing"""
     try:
         # Save file
         file_path = UPLOAD_DIR / f"{current_user.id}_{file.filename}"
@@ -28,7 +30,7 @@ async def upload_document(
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
-        # Create document record
+        # Create document record with pending status
         document = Document(
             owner_id=current_user.id,
             filename=file.filename,
@@ -41,6 +43,15 @@ async def upload_document(
         db.add(document)
         db.commit()
         db.refresh(document)
+        
+        # Trigger async OCR processing
+        try:
+            # Try to enqueue to Redis worker
+            await enqueue_document_processing(document.id)
+        except Exception as e:
+            # If queue fails, run synchronously (fallback)
+            from app.workers.document_worker import process_document_task
+            await process_document_task(document.id)
         
         return document
     
@@ -61,7 +72,7 @@ def list_documents(
     """List user's documents"""
     documents = db.query(Document).filter(
         Document.owner_id == current_user.id
-    ).offset(skip).limit(limit).all()
+    ).order_by(Document.created_at.desc()).offset(skip).limit(limit).all()
     
     return documents
 
@@ -109,3 +120,35 @@ def delete_document(
     db.commit()
     
     return None
+
+
+@router.post("/{document_id}/reprocess")
+def reprocess_document(
+    document_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Re-process a document"""
+    document = db.query(Document).filter(
+        Document.id == document_id,
+        Document.owner_id == current_user.id
+    ).first()
+    
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    # Reset status and re-process
+    document.status = "pending"
+    document.error_message = None
+    db.commit()
+    
+    # Trigger processing
+    import asyncio
+    from app.workers.document_worker import process_document_task
+    try:
+        # Run in background
+        asyncio.create_task(enqueue_document_processing(document.id))
+    except:
+        asyncio.run(process_document_task(document.id))
+    
+    return {"message": "Re-processing started", "document_id": document_id}

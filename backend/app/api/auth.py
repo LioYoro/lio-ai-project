@@ -64,7 +64,7 @@ async def register(user_data: RegisterRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/login")
-async def login(credentials: LoginRequest):
+async def login(credentials: LoginRequest, db: Session = Depends(get_db)):
     """Login user via Supabase Auth"""
     try:
         response = supabase.auth.sign_in_with_password({
@@ -78,6 +78,10 @@ async def login(credentials: LoginRequest):
                 detail="Invalid credentials"
             )
         
+        # Sync user to local DB if not exists
+        from app.dependencies import create_or_sync_user
+        user = create_or_sync_user(db, response.user)
+        
         return {
             "access_token": response.session.access_token,
             "token_type": "bearer",
@@ -88,9 +92,11 @@ async def login(credentials: LoginRequest):
         }
         
     except Exception as e:
+        # Log the actual error for debugging
+        print(f"Login error: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password"
+            detail=f"Invalid email or password: {str(e)}"
         )
 
 
