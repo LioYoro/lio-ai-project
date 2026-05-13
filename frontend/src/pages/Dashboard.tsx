@@ -1,9 +1,19 @@
+import { useQuery } from "@tanstack/react-query";
 import { useDocuments } from "../hooks/useDocuments";
 import { Navbar } from "../components/layout/Navbar";
 import { Card } from "../components/ui/Card";
+import apiClient from "../lib/api";
 
 export const Dashboard = () => {
   const { listDocuments } = useDocuments();
+
+  const { data: stats } = useQuery({
+    queryKey: ["document-stats"],
+    queryFn: async () => {
+      const response = await apiClient.get("/api/documents/stats");
+      return response.data;
+    },
+  });
 
   return (
     <div>
@@ -16,15 +26,15 @@ export const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <Card>
             <h3 className="text-lg font-semibold text-gray-700 mb-2">Total Documents</h3>
-            <p className="text-4xl font-bold text-blue-600">-</p>
+            <p className="text-4xl font-bold text-blue-600">{stats?.total ?? "-"}</p>
           </Card>
           <Card>
             <h3 className="text-lg font-semibold text-gray-700 mb-2">Processing</h3>
-            <p className="text-4xl font-bold text-yellow-600">-</p>
+            <p className="text-4xl font-bold text-yellow-600">{stats?.processing ?? "-"}</p>
           </Card>
           <Card>
             <h3 className="text-lg font-semibold text-gray-700 mb-2">Completed</h3>
-            <p className="text-4xl font-bold text-green-600">-</p>
+            <p className="text-4xl font-bold text-green-600">{stats?.completed ?? "-"}</p>
           </Card>
         </div>
 

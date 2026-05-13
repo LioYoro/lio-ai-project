@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app.database import get_db
 from app.models import User, Document
 from app.schemas import DocumentResponse, DocumentListResponse
@@ -14,6 +15,45 @@ router = APIRouter(prefix="/api/documents", tags=["documents"])
 # Ensure uploads directory exists
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
+
+
+@router.get("/stats")
+def get_document_stats(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get document statistics for the current user"""
+    total = db.query(func.count(Document.id)).filter(
+        Document.owner_id == current_user.id
+    ).scalar()
+    
+    processing = db.query(func.count(Document.id)).filter(
+        Document.owner_id == current_user.id,
+        Document.status == "processing"
+    ).scalar()
+    
+    completed = db.query(func.count(Document.id)).filter(
+        Document.owner_id == current_user.id,
+        Document.status == "completed"
+    ).scalar()
+    
+    pending = db.query(func.count(Document.id)).filter(
+        Document.owner_id == current_user.id,
+        Document.status == "pending"
+    ).scalar()
+    
+    failed = db.query(func.count(Document.id)).filter(
+        Document.owner_id == current_user.id,
+        Document.status == "failed"
+    ).scalar()
+    
+    return {
+        "total": total or 0,
+        "processing": processing or 0,
+        "completed": completed or 0,
+        "pending": pending or 0,
+        "failed": failed or 0
+    }
 
 
 @router.post("/upload", response_model=DocumentResponse)
