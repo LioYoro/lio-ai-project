@@ -242,14 +242,19 @@ E:\Github\lio-ai-project\
 
 ### Phase 4 — Semantic Search (Days 8-10)
 **Goal:** Search documents by meaning, not just keywords
-- [ ] Create Gemini Embedding API integration
+- [ ] Create embedding service with MiniLM (`sentence-transformers/all-MiniLM-L6-v2`)
+- [ ] Enable pgvector extension in Supabase
 - [ ] Generate embeddings on document upload/OCR completion
 - [ ] Store embeddings in pgvector column (Supabase)
-- [ ] Hybrid search: SQL full-text + pgvector similarity
-- [ ] RAG Q&A: ask questions about documents with citation
-- [ ] Frontend: search bar with autocomplete
+- [ ] Vector similarity search using cosine distance
+- [ ] Frontend: search bar with model selector (MiniLM / Gemini Embedding-001)
 - [ ] Frontend: search results with relevance score
-- [ ] Frontend: AI answer panel with source citations
+
+**Embedding Models Available:**
+| Model | Type | Rate Limits | Use Case |
+|-------|------|-------------|----------|
+| MiniLM (local) | HuggingFace | ∞ unlimited | Default, free |
+| Gemini Embedding-001 | Google API | 100 RPM, 1000 RPD | Alternative |
 
 ### Phase 5 — Workflow + Polish (Days 11-14)
 **Goal:** Status tracking, dashboard, final polish

@@ -8,6 +8,7 @@ from app.config import settings
 from app.database import SessionLocal
 from app.models import Document
 from app.services.ocr_service import extract_text
+from app.services.extraction_service import process_document_extraction
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,9 +23,10 @@ class WorkerSettings:
     )
 
 
-async def process_document_task(document_id: str) -> dict:
+async def process_document_task(document_id: str, extraction_model: str = "flash") -> dict:
     """
     ARQ task to process a document with OCR
+    extraction_model: "flash" (gemini-2.5-flash) or "embedding" (gemini-embedding-001)
     """
     logger.info(f"Starting OCR processing for document: {document_id}")
     
@@ -62,6 +64,16 @@ async def process_document_task(document_id: str) -> dict:
             document.status = "completed"
             document.updated_at = datetime.utcnow()
             logger.info(f"OCR completed for {document_id}: method={method}, confidence={confidence:.2f}")
+            
+            # Phase 3: Extract structured fields using Gemini
+            logger.info(f"Starting extraction for document {document_id} with model: {extraction_model}")
+            extraction_result = process_document_extraction(text, extraction_model)
+            
+            # Store extraction results
+            document.extracted_data = extraction_result
+            db.commit()
+            
+            logger.info(f"Extraction completed for {document_id}: type={extraction_result.get('document_type')}, confidence={extraction_result.get('overall_confidence'):.2f}")
         else:
             document.status = "failed"
             document.error_message = f"OCR failed: no text extracted"
@@ -74,7 +86,8 @@ async def process_document_task(document_id: str) -> dict:
             "status": document.status,
             "method": method if text else None,
             "confidence": confidence if text else None,
-            "text_length": len(text) if text else 0
+            "text_length": len(text) if text else 0,
+            "extraction": extraction_result if text else None
         }
         
     except Exception as e:
@@ -94,7 +107,7 @@ async def process_document_task(document_id: str) -> dict:
         db.close()
 
 
-async def enqueue_document_processing(document_id: str):
+async def enqueue_document_processing(document_id: str, extraction_model: str = "flash"):
     """
     Add document processing task to the queue
     """
@@ -113,12 +126,13 @@ async def enqueue_document_processing(document_id: str):
         await pool.enqueue_job(
             "process_document_task",
             document_id,
+            extraction_model,
             _job_id=f"doc_{document_id}"
         )
         
         await pool.close()
         
-        logger.info(f"Enqueued document {document_id} for processing")
+        logger.info(f"Enqueued document {document_id} for processing with model: {extraction_model}")
         return True
         
     except Exception as e:

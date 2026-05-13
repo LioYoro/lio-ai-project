@@ -2,13 +2,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import apiClient from "../lib/api";
 import { Document, DocumentList } from "../types";
 
-export const useDocuments = () => {
+export const useDocuments = (page: number = 1, limit: number = 10) => {
   const queryClient = useQueryClient();
 
   const listDocuments = useQuery({
-    queryKey: ["documents"],
+    queryKey: ["documents", page, limit],
     queryFn: async () => {
-      const response = await apiClient.get<DocumentList[]>("/api/documents/");
+      const skip = (page - 1) * limit;
+      const response = await apiClient.get<DocumentList[]>("/api/documents/", {
+        params: { skip, limit },
+      });
       return response.data;
     },
   });

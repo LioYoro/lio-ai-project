@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, Document
@@ -46,10 +46,8 @@ async def upload_document(
         
         # Trigger async OCR processing
         try:
-            # Try to enqueue to Redis worker
             await enqueue_document_processing(document.id)
         except Exception as e:
-            # If queue fails, run synchronously (fallback)
             from app.workers.document_worker import process_document_task
             await process_document_task(document.id)
         

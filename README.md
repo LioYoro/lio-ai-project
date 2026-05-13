@@ -88,30 +88,55 @@ An AI-powered document processing system that ingests scanned documents/PDFs, ex
 
 ---
 
-### ⏳ Phase 3: AI Extraction (Days 5-7) — NOT STARTED
+### ✅ Phase 3: AI Extraction (Days 5-7) — COMPLETED
 
-**Remaining tasks:**
-- [ ] Create Gemini API integration service (`extraction_service.py`)
-- [ ] Document type classification prompt
-- [ ] Field extraction: names, dates, document numbers, amounts
-- [ ] Store extracted fields as JSON on document model
-- [ ] Confidence scoring on extracted fields
-- [ ] Handle extraction failures gracefully
-- [ ] Frontend: show extracted fields in a clean card
-- [ ] Frontend: highlight missing/uncertain fields
+- [x] Create Gemini API integration service (`extraction_service.py`)
+- [x] Document type classification prompt
+- [x] Field extraction: names, dates, document numbers, amounts
+- [x] Store extracted fields as JSON on document model
+- [x] Confidence scoring on extracted fields
+- [x] Handle extraction failures gracefully
+- [x] Frontend: show extracted fields in a clean card
+- [x] Frontend: highlight missing/uncertain fields
+
+**Features:**
+- Automatic document type classification (certificate, invoice, resume, permit, medical, id, contract)
+- Structured field extraction per document type
+- Per-field confidence scoring
+- Overall extraction confidence (weighted: 30% type, 70% fields)
+- Graceful error handling with fallback
+
+**Backend:**
+- `backend/app/services/extraction_service.py` - Gemini API integration
+- `backend/app/workers/document_worker.py` - Calls extraction after OCR
+- `backend/requirements.txt` - Added google-generativeai
+
+**Frontend:**
+- Enhanced Documents.tsx with extraction results card
+- Field confidence indicators
+- Support for complex field types (arrays, nested values)
+- Extraction notes and status
 
 ---
 
 ### ⏳ Phase 4: Semantic Search (Days 8-10) — NOT STARTED
 
+**Note:** Uses **MiniLM** (HuggingFace sentence-transformers) for embeddings - free, unlimited, no API rate limits.
+
 **Remaining tasks:**
-- [ ] Create Gemini Embedding API integration
+- [ ] Create embedding service with MiniLM (`all-MiniLM-L6-v2`)
+- [ ] Enable pgvector extension in Supabase
 - [ ] Generate embeddings on document upload/OCR completion
 - [ ] Store embeddings in pgvector column (Supabase)
-- [ ] Hybrid search: SQL full-text + pgvector similarity
-- [ ] RAG Q&A: ask questions about documents with citation
-- [ ] Frontend: search bar with autocomplete
+- [ ] Vector similarity search using cosine distance
+- [ ] Frontend: search bar with model selector (MiniLM / Gemini Embedding)
 - [ ] Frontend: search results with relevance score
+
+**Rate Limits:**
+| Model | RPM | RPD |
+|-------|-----|-----|
+| MiniLM (local) | ∞ | ∞ |
+| Gemini Embedding-001 | 100 | 1000 |
 
 ---
 

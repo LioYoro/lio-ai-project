@@ -18,4 +18,5 @@ pytesseract==0.3.13
 pymupdf==1.27.2
 pillow==12.2.0
 opencv-python-headless==4.9.0.80
+google-generativeai==0.3.0
 email-validator==2.3.0

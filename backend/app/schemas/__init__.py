@@ -52,6 +52,7 @@ class DocumentListResponse(BaseModel):
     file_type: Optional[str] = None
     status: str
     raw_text: Optional[str] = None
+    extracted_data: Optional[dict] = None
     confidence_score: Optional[float] = None
     created_at: datetime
     updated_at: Optional[datetime] = None

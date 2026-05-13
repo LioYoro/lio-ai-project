@@ -5,8 +5,58 @@ import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { Upload, FileText, RefreshCw } from "lucide-react";
 
+// Helper to format field values properly (handles objects, arrays, strings)
+const formatFieldValue = (value: any): string => {
+  if (value === null || value === undefined) return "—";
+  
+  // If it's a string, return as-is (or convert empty string to dash)
+  if (typeof value === "string") {
+    return value.trim() || "—";
+  }
+  
+  // If it's a number, return as string
+  if (typeof value === "number") {
+    return String(value);
+  }
+  
+  // If it's an array (skills, job_titles, etc)
+  if (Array.isArray(value)) {
+    if (value.length === 0) return "—";
+    return value.map(v => typeof v === "string" ? v : JSON.stringify(v)).join(", ");
+  }
+  
+  // If it's an object (education, experience, etc)
+  if (typeof value === "object") {
+    // Try to extract useful properties
+    try {
+      const entries = Object.entries(value).filter(([k, v]) => v !== null && v !== undefined);
+      if (entries.length === 0) return "—";
+      
+      // Format as "key: value" pairs or just values
+      const formatted = entries.map(([k, v]) => {
+        if (v === null || v === undefined) return null;
+        if (typeof v === "string") return v;
+        if (typeof v === "number") return String(v);
+        if (Array.isArray(v)) return v.join(", ");
+        if (typeof v === "object") return JSON.stringify(v);
+        return String(v);
+      }).filter(v => v !== null);
+      
+      if (formatted.length === 0) return "—";
+      return formatted.join(" | ");
+    } catch (e) {
+      return "—";
+    }
+  }
+  
+  // Fallback
+  return String(value) || "—";
+};
+
 export const Documents = () => {
-  const { listDocuments, uploadDocument } = useDocuments();
+  const [page, setPage] = useState(1);
+  const limit = 10;
+  const { listDocuments, uploadDocument } = useDocuments(page, limit);
   const [file, setFile] = useState<File | null>(null);
   const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
 
@@ -57,6 +107,7 @@ export const Documents = () => {
         {/* Upload Section */}
         <Card className="mb-8">
           <h2 className="text-2xl font-bold mb-6">Upload New Document</h2>
+          
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
             <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
             <input
@@ -152,11 +203,97 @@ export const Documents = () => {
                             </div>
                           </div>
                         )}
+                        {doc.extracted_data && (
+                          <div className="md:col-span-2">
+                            <p className="text-sm font-medium text-gray-700 mb-2">Extracted Fields</p>
+                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                              {/* Document Type */}
+                              <div className="mb-4">
+                                <div className="flex justify-between items-center">
+                                  <p className="text-sm font-semibold text-blue-900">
+                                    Document Type: {doc.extracted_data.document_type || "Unknown"}
+                                  </p>
+                                  <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                                    {doc.extracted_data.overall_confidence 
+                                      ? `${Math.round(doc.extracted_data.overall_confidence * 100)}%` 
+                                      : "N/A"}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Extracted Fields */}
+                              {doc.extracted_data.extracted_fields && Object.keys(doc.extracted_data.extracted_fields).length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  {Object.entries(doc.extracted_data.extracted_fields).map(([key, field]: any) => (
+                                    <div key={key} className="bg-white p-3 rounded border border-blue-100">
+                                      <p className="text-xs font-medium text-gray-600 uppercase">{key}</p>
+                                      <p className="text-sm text-gray-900 mt-1 break-words">
+                                        {formatFieldValue(field?.value)}
+                                      </p>
+                                      {field?.confidence !== undefined && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                          Confidence: {Math.round(field.confidence * 100)}%
+                                        </p>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-gray-600">No fields extracted</p>
+                              )}
+
+                              {/* Rate Limit Warning */}
+                              {(doc.extracted_data.rate_limited || 
+                                doc.extracted_data.extraction_notes?.includes("rate limit") ||
+                                doc.extracted_data.extraction_notes?.includes("quota")) && (
+                                <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                  <p className="text-sm text-yellow-800">
+                                    <span className="font-semibold">⚠️ API Rate Limit:</span> Extraction temporarily unavailable. Please try again later.
+                                  </p>
+                                </div>
+                              )}
+
+                              {/* Extraction Notes */}
+                              {doc.extracted_data.extraction_notes && !doc.extracted_data.rate_limited && (
+                                <div className="mt-3 pt-3 border-t border-blue-200">
+                                  <p className="text-xs text-gray-600">
+                                    <span className="font-semibold">Notes:</span> {doc.extracted_data.extraction_notes}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
                 </Card>
               ))}
+
+              {/* Pagination Controls */}
+              {listDocuments.data && listDocuments.data.length > 0 && (
+                <div className="flex justify-center items-center gap-4 mt-6">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm text-gray-600">
+                    Page {page}
+                  </span>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setPage(p => p + 1)}
+                    disabled={listDocuments.data.length < limit}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
             </div>
           ) : (
             <Card>
