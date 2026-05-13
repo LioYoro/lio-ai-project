@@ -35,7 +35,7 @@ export const Search = () => {
     setError(null);
     
     try {
-      const token = localStorage.getItem("access_token");
+      const token = localStorage.getItem("sb-access-token");
       
       const response = await fetch("http://localhost:8001/api/search/semantic", {
         method: "POST",
