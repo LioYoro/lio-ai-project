@@ -46,13 +46,17 @@ def semantic_search(
         
         # Query documents using pgvector similarity
         # The <=> operator computes the distance, so we use 1 - distance for similarity
+        # Filename matching adds +0.3 boost to prioritize exact keyword matches
+        query_like = f"%{request.query}%"
         sql_query = text("""
             SELECT 
                 d.id,
                 d.filename,
                 d.file_type,
                 d.raw_text,
-                (1 - (d.embedding <=> CAST(:query_embedding AS vector))) as relevance_score
+                LEAST(1.0, (1 - (d.embedding <=> CAST(:query_embedding AS vector)))
+                    + CASE WHEN LOWER(d.filename) LIKE LOWER(:query_like) THEN 0.3 ELSE 0 END
+                ) as relevance_score
             FROM documents d
             WHERE d.owner_id = :user_id AND d.embedding IS NOT NULL
             ORDER BY relevance_score DESC
@@ -66,6 +70,7 @@ def semantic_search(
             sql_query,
             {
                 "query_embedding": embedding_str,
+                "query_like": query_like,
                 "user_id": current_user.id,
                 "limit": request.limit
             }
