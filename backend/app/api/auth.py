@@ -1,57 +1,107 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from pydantic import BaseModel, EmailStr
+from typing import Optional
 from app.database import get_db
 from app.models import User
-from app.schemas import UserCreate, UserLogin, UserResponse, Token
-from app.dependencies import hash_password, verify_password, create_access_token
-from datetime import timedelta
+from app.dependencies import supabase, get_current_user
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
+class RegisterRequest(BaseModel):
+    email: EmailStr
+    password: str
+    full_name: Optional[str] = None
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class UserResponse(BaseModel):
+    id: str
+    email: str
+    full_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
 @router.post("/register", response_model=UserResponse)
-def register(user_data: UserCreate, db: Session = Depends(get_db)):
-    """Register a new user"""
-    # Check if user already exists
-    existing_user = db.query(User).filter(User.email == user_data.email).first()
-    if existing_user:
+async def register(user_data: RegisterRequest, db: Session = Depends(get_db)):
+    """Register a new user via Supabase Auth"""
+    try:
+        # Create user in Supabase Auth
+        response = supabase.auth.sign_up({
+            "email": user_data.email,
+            "password": user_data.password,
+            "options": {
+                "data": {
+                    "full_name": user_data.full_name or ""
+                }
+            }
+        })
+        
+        if response.user is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=response.session or "Failed to create user"
+            )
+        
+        # Create user in local DB
+        from app.dependencies import create_or_sync_user
+        user = create_or_sync_user(db, response.user)
+        
+        return user
+        
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            detail=str(e)
         )
-    
-    # Create new user
-    hashed_password = hash_password(user_data.password)
-    new_user = User(
-        email=user_data.email,
-        full_name=user_data.full_name,
-        hashed_password=hashed_password
-    )
-    
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    
-    return new_user
 
 
-@router.post("/login", response_model=Token)
-def login(user_data: UserLogin, db: Session = Depends(get_db)):
-    """Login user and return JWT token"""
-    # Find user
-    user = db.query(User).filter(User.email == user_data.email).first()
-    
-    if not user or not verify_password(user_data.password, user.hashed_password):
+@router.post("/login")
+async def login(credentials: LoginRequest):
+    """Login user via Supabase Auth"""
+    try:
+        response = supabase.auth.sign_in_with_password({
+            "email": credentials.email,
+            "password": credentials.password
+        })
+        
+        if response.user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials"
+            )
+        
+        return {
+            "access_token": response.session.access_token,
+            "token_type": "bearer",
+            "user": {
+                "id": response.user.id,
+                "email": response.user.email
+            }
+        }
+        
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
         )
-    
-    # Create token
-    access_token_expires = timedelta(minutes=30)
-    access_token = create_access_token(
-        data={"sub": user.email},
-        expires_delta=access_token_expires
-    )
-    
-    return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.get("/me", response_model=UserResponse)
+async def get_me(current_user: User = Depends(get_current_user)):
+    """Get current user info"""
+    return current_user
+
+
+@router.post("/logout")
+async def logout():
+    """Logout user"""
+    # Client handles token removal, just return success
+    return {"message": "Logged out successfully"}

@@ -1,37 +1,54 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
-import apiClient from "../lib/api";
-import { AuthResponse } from "../types";
+import { useMutation } from "@tanstack/react-query";
+import { supabase } from "../lib/supabase";
 
 export const useAuth = () => {
-  const getUser = async () => {
-    const token = localStorage.getItem("access_token");
-    if (!token) return null;
-    
-    // You would fetch user info here
-    // For now, we'll just return null if no token
-    return token ? { authenticated: true } : null;
-  };
-
   const login = useMutation({
     mutationFn: async (credentials: { email: string; password: string }) => {
-      const response = await apiClient.post<AuthResponse>("/api/auth/login", credentials);
-      localStorage.setItem("access_token", response.data.access_token);
-      return response.data;
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password
+      })
+      
+      if (error) throw new Error(error.message)
+      
+      // Store token
+      if (data.session) {
+        localStorage.setItem('sb-access-token', data.session.access_token)
+      }
+      
+      return data
     },
-  });
+  })
 
   const register = useMutation({
     mutationFn: async (data: { email: string; password: string; full_name?: string }) => {
-      const response = await apiClient.post<AuthResponse>("/api/auth/register", data);
-      localStorage.setItem("access_token", response.data.access_token);
-      return response.data;
+      const { data: signUpData, error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            full_name: data.full_name || ''
+          }
+        }
+      })
+      
+      if (error) throw new Error(error.message)
+      
+      // If auto-confirmed, login immediately
+      if (signUpData.session) {
+        localStorage.setItem('sb-access-token', signUpData.session.access_token)
+      }
+      
+      return signUpData
     },
-  });
+  })
 
-  const logout = () => {
-    localStorage.removeItem("access_token");
-    window.location.href = "/login";
-  };
+  const logout = useMutation({
+    mutationFn: async () => {
+      await supabase.auth.signOut()
+      localStorage.removeItem('sb-access-token')
+    },
+  })
 
-  return { login, register, logout, getUser };
-};
+  return { login, register, logout }
+}

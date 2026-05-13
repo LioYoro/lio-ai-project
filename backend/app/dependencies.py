@@ -1,69 +1,88 @@
-from datetime import datetime, timedelta, timezone
-from typing import Optional
-from jose import JWTError, jwt
-from passlib.context import CryptContext
+from supabase import create_client, Client
+from fastapi import Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthCredentials
+from typing import Optional
 from app.config import settings
 from app.database import get_db
 from app.models import User
 from app.schemas import TokenData
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-security = HTTPBearer()
+# Create Supabase client
+supabase: Client = create_client(
+    settings.SUPABASE_URL,
+    settings.SUPABASE_SERVICE_ROLE_KEY  # Use service role for server-side operations
+)
 
 
 def hash_password(password: str) -> str:
-    """Hash a password using bcrypt"""
+    """Hash a password using bcrypt (still needed for initial user creation if needed)"""
+    from passlib.context import CryptContext
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
     return pwd_context.hash(password)
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against a hash"""
-    return pwd_context.verify(plain_password, hashed_password)
+def get_user_by_email(db: Session, email: str) -> Optional[User]:
+    """Get user from local DB by email"""
+    return db.query(User).filter(User.email == email).first()
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """Create a JWT access token"""
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
-    else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+def create_or_sync_user(db: Session, supabase_user) -> User:
+    """Create or sync user from Supabase Auth to local DB"""
+    user = db.query(User).filter(User.id == supabase_user.id).first()
     
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
-    return encoded_jwt
-
-
-def verify_token(token: str) -> TokenData:
-    """Verify a JWT token"""
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise credentials_exception
-        token_data = TokenData(email=email)
-    except JWTError:
-        raise credentials_exception
-    return token_data
+    if not user:
+        # Create new user
+        user = User(
+            id=supabase_user.id,
+            email=supabase_user.email,
+            full_name=supabase_user.user_metadata.get("full_name") if supabase_user.user_metadata else None
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    else:
+        # Update user info
+        user.email = supabase_user.email
+        if supabase_user.user_metadata:
+            user.full_name = supabase_user.user_metadata.get("full_name", user.full_name)
+        db.commit()
+    
+    return user
 
 
 async def get_current_user(
-    credentials: HTTPAuthCredentials = Depends(security),
+    authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db)
 ) -> User:
-    """Dependency to get the current authenticated user"""
-    token = credentials.credentials
-    token_data = verify_token(token)
-    user = db.query(User).filter(User.email == token_data.email).first()
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
+    """Dependency to get the current authenticated user via Supabase token"""
+    if not authorization:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authorization header missing",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Extract token from "Bearer <token>"
+    token = authorization.replace("Bearer ", "").replace("bearer ", "")
+    
+    try:
+        # Verify the token with Supabase
+        user_response = supabase.auth.get_user(token)
+        supabase_user = user_response.user
+        
+        if not supabase_user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token",
+            )
+        
+        # Sync/get user from local DB
+        user = create_or_sync_user(db, supabase_user)
+        return user
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Could not validate credentials: {str(e)}",
+            headers={"WWW-Authenticate": "Bearer"},
+        )

@@ -1,7 +1,6 @@
 import { useDocuments } from "../hooks/useDocuments";
 import { Navbar } from "../components/layout/Navbar";
 import { Card } from "../components/ui/Card";
-import { Button } from "../components/ui/Button";
 
 export const Dashboard = () => {
   const { listDocuments } = useDocuments();

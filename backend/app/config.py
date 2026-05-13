@@ -21,11 +21,17 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
-    # CORS
-    CORS_ORIGINS: list = ["*"]
+    # CORS - as string, we'll parse it
+    CORS_ORIGINS: str = "*"
     
     class Config:
         env_file = ".env"
+
+    @property
+    def cors_origins_list(self):
+        if self.CORS_ORIGINS == "*":
+            return ["*"]
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
 
 
 settings = Settings()
