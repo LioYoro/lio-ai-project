@@ -102,13 +102,13 @@ def generate_embeddings_for_user(
     This endpoint should be called to initialize embeddings for semantic search.
     """
     try:
-        from app.services.embedding_service import generate_embeddings_batch
+        from app.services.embedding_service import generate_embedding
         
-        # Get all documents for the user that have raw_text but no embedding
+        # Get all documents for the user that have raw_text but no embedding yet
         documents = db.query(Document).filter(
             Document.owner_id == current_user.id,
             Document.raw_text.isnot(None),
-            (Document.embedding.isnot(None)) | (Document.embedding == None)  # Get all with raw_text
+            Document.embedding.is_(None)
         ).all()
         
         if not documents:
@@ -117,19 +117,24 @@ def generate_embeddings_for_user(
                 "count": 0
             }
         
-        # Generate embeddings for all documents
-        texts = [doc.raw_text for doc in documents]
-        embeddings = generate_embeddings_batch(texts)
-        
-        # Update documents with embeddings
-        for doc, embedding in zip(documents, embeddings):
-            doc.embedding = embedding
+        # Generate embeddings one at a time with individual error handling
+        success_count = 0
+        for doc in documents:
+            try:
+                embedding = generate_embedding(doc.raw_text)
+                if any(v != 0.0 for v in embedding):  # Verify non-zero
+                    doc.embedding = embedding
+                    success_count += 1
+                else:
+                    print(f"Warning: Zero embedding for document {doc.id}")
+            except Exception as e:
+                print(f"Error embedding document {doc.id}: {str(e)}")
         
         db.commit()
         
         return {
-            "message": f"Generated embeddings for {len(documents)} documents",
-            "count": len(documents)
+            "message": f"Generated embeddings for {success_count} documents",
+            "count": success_count
         }
     
     except Exception as e:
