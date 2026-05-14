@@ -18,10 +18,13 @@ services:
         scope: run
       - key: UPSTASH_REDIS_REST_TOKEN
         scope: run
-      - key: GEMINI_API_KEY
+      - key: OPENAI_API_KEY
         scope: run
       - key: JWT_SECRET
         scope: run
       - key: CORS_ORIGINS
         scope: run
         value: "https://your-frontend.vercel.app"
+      - key: ADMIN_EMAIL
+        scope: run
+        value: "singajiyu10@gmail.com"
