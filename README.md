@@ -42,7 +42,7 @@ An AI-powered document processing system that ingests scanned documents/PDFs, ex
 | Database | PostgreSQL (Supabase) + Auth + pgvector | ✅ Done |
 | OCR | Tesseract (images), PyMuPDF (PDFs) | ✅ Done |
 | Queue | Redis (Upstash) + fallback sync | ⚠️ Fallback active |
-| LLM | Gemini 2.5 Flash (document extraction) | ✅ Done |
+| LLM | OpenAI GPT-4o-mini (document extraction) | ✅ Done |
 | Search | Semantic (pgvector + MiniLM) | ✅ Done |
 
 ---
@@ -90,7 +90,7 @@ An AI-powered document processing system that ingests scanned documents/PDFs, ex
 
 ### ✅ Phase 3: AI Extraction (Days 5-7) — COMPLETED
 
-- [x] Create Gemini API integration service (`extraction_service.py`)
+- [x] Create OpenAI API integration service (`extraction_service.py`)
 - [x] Document type classification prompt
 - [x] Field extraction: names, dates, document numbers, amounts
 - [x] Store extracted fields as JSON on document model
@@ -107,7 +107,7 @@ An AI-powered document processing system that ingests scanned documents/PDFs, ex
 - Graceful error handling with fallback
 
 **Backend:**
-- `backend/app/services/extraction_service.py` - Gemini API integration
+- `backend/app/services/extraction_service.py` - OpenAI API integration
 - `backend/app/workers/document_worker.py` - Calls extraction after OCR
 - `backend/requirements.txt` - Added google-generativeai
 
@@ -209,7 +209,7 @@ npm run dev
 1. **Upstash Redis:** Connection may fail, falls back to synchronous processing (works fine)
 2. **Tesseract:** Installed at `C:\Program Files\Tesseract-OCR\tesseract.exe`
 3. **CV2 Preprocessing:** Disabled - raw image gives better OCR results
-4. **Gemini Rate Limit:** 20 requests/day free tier — 2 calls per document (classification + extraction)
+4. **OpenAI API:** Using OpenAI credits — 2 calls per document (classification + extraction)
 5. **MiniLM Startup:** ~5-10s cold start on first import (model loads into memory)
 6. **Frontend Auth Token:** Uses `sb-access-token` (not `access_token`) in localStorage
 7. **Backend Port:** 8001, Frontend Port: 5173

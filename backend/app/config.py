@@ -14,7 +14,10 @@ class Settings(BaseSettings):
     UPSTASH_REDIS_REST_TOKEN: str
     
     # Gemini API
-    GEMINI_API_KEY: str
+    GEMINI_API_KEY: str = ""
+    
+    # OpenAI API
+    OPENAI_API_KEY: str = ""
     
     # Auth
     JWT_SECRET: str
@@ -23,6 +26,9 @@ class Settings(BaseSettings):
     
     # CORS - as string, we'll parse it
     CORS_ORIGINS: str = "*"
+    
+    # Admin
+    ADMIN_EMAIL: str = ""
     
     class Config:
         env_file = ".env"

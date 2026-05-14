@@ -4,10 +4,13 @@ import { Button } from "../ui/Button";
 
 export const Navbar = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
   const { logout } = useAuth();
+  const userRole = localStorage.getItem("user-role");
+  const isAdmin = userRole === "admin";
 
   const handleLogout = () => {
     logout.mutate(undefined, {
       onSuccess: () => {
+        localStorage.removeItem("user-role");
         window.location.href = "/login";
       }
     });
@@ -29,6 +32,11 @@ export const Navbar = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
               <Link to="/search" className="text-gray-700 hover:text-blue-600">
                 Search
               </Link>
+              {isAdmin && (
+                <Link to="/admin" className="text-purple-700 hover:text-purple-900 font-medium">
+                  Admin
+                </Link>
+              )}
               <Button variant="secondary" onClick={handleLogout}>
                 Logout
               </Button>

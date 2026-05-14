@@ -5,6 +5,7 @@ from typing import Optional
 from app.database import get_db
 from app.models import User
 from app.dependencies import supabase, get_current_user
+from app.services.audit_service import log_action
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -24,6 +25,7 @@ class UserResponse(BaseModel):
     id: str
     email: str
     full_name: Optional[str] = None
+    role: str = "user"
 
     class Config:
         from_attributes = True
@@ -54,6 +56,15 @@ async def register(user_data: RegisterRequest, db: Session = Depends(get_db)):
         from app.dependencies import create_or_sync_user
         user = create_or_sync_user(db, response.user)
         
+        # Audit log for registration
+        log_action(
+            db=db,
+            user_id=user.id,
+            user_email=user.email,
+            action="user_register",
+            details={"full_name": user_data.full_name}
+        )
+        
         return user
         
     except Exception as e:
@@ -82,12 +93,22 @@ async def login(credentials: LoginRequest, db: Session = Depends(get_db)):
         from app.dependencies import create_or_sync_user
         user = create_or_sync_user(db, response.user)
         
+        # Audit log for login
+        log_action(
+            db=db,
+            user_id=user.id,
+            user_email=user.email,
+            action="user_login",
+            details={}
+        )
+        
         return {
             "access_token": response.session.access_token,
             "token_type": "bearer",
             "user": {
-                "id": response.user.id,
-                "email": response.user.email
+                "id": user.id,
+                "email": user.email,
+                "role": user.role
             }
         }
         

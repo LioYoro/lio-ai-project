@@ -30,21 +30,27 @@ def create_or_sync_user(db: Session, supabase_user) -> User:
     """Create or sync user from Supabase Auth to local DB"""
     user = db.query(User).filter(User.id == supabase_user.id).first()
     
+    # Check if this user should be admin
+    is_admin = settings.ADMIN_EMAIL and supabase_user.email == settings.ADMIN_EMAIL
+    
     if not user:
         # Create new user
         user = User(
             id=supabase_user.id,
             email=supabase_user.email,
-            full_name=supabase_user.user_metadata.get("full_name") if supabase_user.user_metadata else None
+            full_name=supabase_user.user_metadata.get("full_name") if supabase_user.user_metadata else None,
+            role="admin" if is_admin else "user"
         )
         db.add(user)
         db.commit()
         db.refresh(user)
     else:
-        # Update user info
+        # Update user info and role if needed
         user.email = supabase_user.email
         if supabase_user.user_metadata:
             user.full_name = supabase_user.user_metadata.get("full_name", user.full_name)
+        if is_admin:
+            user.role = "admin"
         db.commit()
     
     return user
@@ -86,3 +92,15 @@ async def get_current_user(
             detail=f"Could not validate credentials: {str(e)}",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+
+async def require_admin(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    """Dependency to ensure the current user is an admin"""
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    return current_user

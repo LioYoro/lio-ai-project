@@ -1,33 +1,29 @@
 import json
 import logging
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 import re
 
 logger = logging.getLogger(__name__)
 
 
-def get_gemini_client():
-    """Get Gemini API client"""
-    import google.generativeai as genai
+def get_openai_client():
+    """Get OpenAI API client"""
+    from openai import OpenAI
     from app.config import settings
     
-    genai.configure(api_key=settings.GEMINI_API_KEY)
-    return genai
+    return OpenAI(api_key=settings.OPENAI_API_KEY)
 
 
 def is_rate_limit_error(e: Exception) -> bool:
     """Check if exception is a rate limit / quota error"""
     error_str = str(e).lower()
-    return any(x in error_str for x in ["429", "quota", "rate limit", "resource_exhausted", "exceeded"])
+    return any(x in error_str for x in ["429", "rate_limit", "insufficient_quota", "billing"])
 
 
-def classify_document_type(text: str, model_type: str = "flash") -> Dict[str, Any]:
-    """Classify document type using Gemini"""
+def classify_document_type(text: str, model: str = "gpt-4o-mini") -> Dict[str, Any]:
+    """Classify document type using OpenAI"""
     try:
-        client = get_gemini_client()
-        
-        # Select model
-        model_name = "gemini-embedding-001" if model_type == "embedding" else "gemini-2.5-flash"
+        client = get_openai_client()
         
         prompt = f"""Analyze this document text and classify its type. Return a JSON object with:
 - type: one of [certificate, invoice, resume, permit, medical, id, contract, other]
@@ -49,17 +45,18 @@ Document text:
 {text[:3000]}
 
 Return ONLY valid JSON, no other text."""
+
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "You are a document classification assistant. Return ONLY valid JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.1,
+            response_format={"type": "json_object"}
+        )
         
-        model = client.GenerativeModel(model_name)
-        response = model.generate_content(prompt)
-        
-        # Parse JSON response
-        response_text = response.text.strip()
-        # Remove markdown code blocks if present
-        response_text = re.sub(r'^```json\s*', '', response_text)
-        response_text = re.sub(r'\s*```$', '', response_text)
-        
-        result = json.loads(response_text)
+        result = json.loads(response.choices[0].message.content)
         
         logger.info(f"Document classified as: {result.get('type')} (confidence: {result.get('confidence')})")
         return result
@@ -67,7 +64,6 @@ Return ONLY valid JSON, no other text."""
     except Exception as e:
         logger.error(f"Document classification failed: {e}")
         
-        # Check for rate limit
         if is_rate_limit_error(e):
             return {
                 "type": "other",
@@ -83,15 +79,13 @@ Return ONLY valid JSON, no other text."""
         }
 
 
-def extract_fields(text: str, doc_type: str = "other", model_type: str = "flash") -> Dict[str, Any]:
-    """Extract structured fields from document text using Gemini"""
+def extract_fields(text: str, doc_type: str = "other", model: str = "gpt-4o-mini") -> Dict[str, Any]:
+    """Extract structured fields from document text using OpenAI"""
     try:
-        client = get_gemini_client()
+        client = get_openai_client()
         
-        # Base fields that apply to all documents
         base_fields = "name, date, email, phone, address, id_number, amount"
         
-        # Type-specific fields
         type_specific = {
             "certificate": "issuer, course_name, level, completion_date, certificate_number",
             "invoice": "invoice_number, invoice_date, due_date, vendor_name, total_amount, items",
@@ -114,6 +108,7 @@ Rules:
 - Keep values clean and consistent
 - For lists (skills, items), return as arrays
 - IMPORTANT: For complex fields like 'education', 'experience', 'address' - return as a simple STRING (e.g., "Bachelor of Science in IT - Jose Rizal University" or "Mandaluyong City, Philippines") instead of nested objects
+- For resume experience_years: If work dates are like "Jan 2026 to Apr 2026", calculate as months and convert to years (e.g., 4 months = 0.33 years). Add up all work experience durations.
 
 Document text:
 {text[:5000]}
@@ -129,19 +124,18 @@ Return ONLY valid JSON with structure like:
   "overall_confidence": 0.85,
   "extraction_notes": "..."
 }}"""
+
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "You are a document extraction assistant. Extract structured data from documents. Return ONLY valid JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.1,
+            response_format={"type": "json_object"}
+        )
         
-        # Select model
-        model_name = "gemini-embedding-001" if model_type == "embedding" else "gemini-2.5-flash"
-        model = client.GenerativeModel(model_name)
-        response = model.generate_content(prompt)
-        
-        # Parse JSON response
-        response_text = response.text.strip()
-        # Remove markdown code blocks if present
-        response_text = re.sub(r'^```json\s*', '', response_text)
-        response_text = re.sub(r'\s*```$', '', response_text)
-        
-        result = json.loads(response_text)
+        result = json.loads(response.choices[0].message.content)
         
         logger.info(f"Extracted {len(result.get('fields', {}))} fields with confidence {result.get('overall_confidence', 0)}")
         return result
@@ -149,7 +143,6 @@ Return ONLY valid JSON with structure like:
     except Exception as e:
         logger.error(f"Field extraction failed: {e}")
         
-        # Check for rate limit
         if is_rate_limit_error(e):
             return {
                 "fields": {},
@@ -165,18 +158,18 @@ Return ONLY valid JSON with structure like:
         }
 
 
-def process_document_extraction(text: str, model_type: str = "flash") -> Dict[str, Any]:
+def process_document_extraction(text: str, model: str = "gpt-4o-mini") -> Dict[str, Any]:
     """
     Complete extraction pipeline: classify → extract
-    model_type: "flash" (gemini-2.5-flash) or "embedding" (gemini-embedding-001)
+    model: "gpt-4o" or "gpt-4o-mini" (cheaper)
     """
     try:
         # Step 1: Classify document type
-        classification = classify_document_type(text, model_type)
+        classification = classify_document_type(text, model)
         doc_type = classification.get("type", "other")
         
         # Step 2: Extract fields based on type
-        extraction = extract_fields(text, doc_type, model_type)
+        extraction = extract_fields(text, doc_type, model)
         
         # Combine results
         result = {

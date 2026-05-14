@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, DateTime, Text, Enum, ForeignKey, JSON, Float
+from sqlalchemy import Column, String, Integer, DateTime, Text, Enum, ForeignKey, JSON, Float, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
@@ -13,6 +13,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     full_name = Column(String)
     hashed_password = Column(String)
+    role = Column(String, default="user")  # "user" or "admin"
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -38,6 +39,11 @@ class Document(Base):
     
     # Vector embedding for semantic search (384-dimensional from MiniLM)
     embedding = Column(Vector(384))  # pgvector column
+    
+    # Document metadata
+    document_type = Column(String)  # Certificate, Invoice, Resume, Permit, Medical, ID, Contract, Other
+    notes = Column(Text)  # User notes after reviewing extraction
+    is_verified = Column(Boolean, default=False)  # User marked as verified
     
     # Status
     status = Column(String, default="pending")  # pending, processing, completed, failed
@@ -69,3 +75,16 @@ class Workflow(Base):
     # Relationships
     document = relationship("Document", back_populates="workflows")
     user = relationship("User", back_populates="workflows")
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    user_email = Column(String)  # Snapshot of email for audit trail
+    document_id = Column(String, ForeignKey("documents.id"), nullable=True)
+    document_name = Column(String)  # Snapshot of filename for audit trail
+    action = Column(String)  # upload, ocr_completed, extraction_completed, delete, reprocess, verify, notes, login
+    details = Column(JSON)  # Additional context (file size, confidence score, etc)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)

@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database import get_db
 from app.models import User, Document
-from app.schemas import DocumentResponse, DocumentListResponse
+from app.schemas import DocumentResponse, DocumentListResponse, DocumentUpdate
 from app.dependencies import get_current_user
 from app.workers.document_worker import enqueue_document_processing
+from app.services.audit_service import log_action
 from pathlib import Path
 import shutil
 import asyncio
@@ -59,6 +60,7 @@ def get_document_stats(
 @router.post("/upload", response_model=DocumentResponse)
 async def upload_document(
     file: UploadFile = File(...),
+    document_type: str = Form(None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -77,12 +79,24 @@ async def upload_document(
             file_path=str(file_path),
             file_type=file.filename.split('.')[-1].lower(),
             mime_type=file.content_type,
+            document_type=document_type,  # Optional doc type hint
             status="pending"
         )
         
         db.add(document)
         db.commit()
         db.refresh(document)
+        
+        # Log the action
+        log_action(
+            db=db,
+            user_id=current_user.id,
+            user_email=current_user.email,
+            action="upload",
+            document_id=document.id,
+            document_name=file.filename,
+            details={"file_type": file.content_type, "document_type": document_type}
+        )
         
         # Trigger async OCR processing
         try:
@@ -148,6 +162,16 @@ def delete_document(
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
     
+    # Log the action
+    log_action(
+        db=db,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        action="delete",
+        document_id=document_id,
+        document_name=document.filename
+    )
+    
     # Delete file
     file_path = Path(document.file_path)
     if file_path.exists():
@@ -175,6 +199,16 @@ def reprocess_document(
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
     
+    # Log the action
+    log_action(
+        db=db,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        action="reprocess",
+        document_id=document_id,
+        document_name=document.filename
+    )
+    
     # Reset status and re-process
     document.status = "pending"
     document.error_message = None
@@ -190,3 +224,72 @@ def reprocess_document(
         asyncio.run(process_document_task(document.id))
     
     return {"message": "Re-processing started", "document_id": document_id}
+
+
+@router.put("/{document_id}/notes", response_model=DocumentResponse)
+def update_document_notes(
+    document_id: str,
+    update: DocumentUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update document notes"""
+    document = db.query(Document).filter(
+        Document.id == document_id,
+        Document.owner_id == current_user.id
+    ).first()
+    
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    if update.notes is not None:
+        document.notes = update.notes
+        
+        # Log the action
+        log_action(
+            db=db,
+            user_id=current_user.id,
+            user_email=current_user.email,
+            action="notes",
+            document_id=document_id,
+            document_name=document.filename,
+            details={"notes": update.notes}
+        )
+    
+    db.commit()
+    db.refresh(document)
+    return document
+
+
+@router.put("/{document_id}/verify", response_model=DocumentResponse)
+def toggle_document_verify(
+    document_id: str,
+    is_verified: bool,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Toggle document verified status"""
+    document = db.query(Document).filter(
+        Document.id == document_id,
+        Document.owner_id == current_user.id
+    ).first()
+    
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    document.is_verified = is_verified
+    
+    # Log the action
+    log_action(
+        db=db,
+        user_id=current_user.id,
+        user_email=current_user.email,
+        action="verify",
+        document_id=document_id,
+        document_name=document.filename,
+        details={"is_verified": is_verified}
+    )
+    
+    db.commit()
+    db.refresh(document)
+    return document

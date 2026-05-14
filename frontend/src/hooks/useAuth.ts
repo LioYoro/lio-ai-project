@@ -11,6 +11,12 @@ export const useAuth = () => {
         localStorage.setItem('sb-access-token', response.data.access_token)
       }
       
+      // Store role (from nested user object)
+      const role = response.data.user?.role || response.data.role
+      if (role) {
+        localStorage.setItem('user-role', role)
+      }
+      
       return response.data
     },
   })
