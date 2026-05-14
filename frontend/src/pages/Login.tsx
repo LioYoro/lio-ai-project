@@ -39,33 +39,32 @@ export const Login = () => {
       </div>
 
       <div className="w-full max-w-md relative z-10">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4 shadow-lg shadow-blue-500/30">
-            <Sparkles className="w-8 h-8 text-white" />
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl mb-6 shadow-lg shadow-blue-500/30">
+            <Sparkles className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">LioYoro</h1>
-          <p className="text-slate-400 mt-1">Hikari Systems</p>
+          <h1 className="text-3xl font-bold text-white tracking-tight">LioYoro | Hikari Systems</h1>
+          <p className="text-slate-400 mt-2 text-lg">DocFlow: AI Document Workflow Automation Platform</p>
         </div>
 
         <Card className="w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl shadow-slate-500/20">
-          <CardHeader className="pb-4 px-8 pt-8">
+          <CardHeader className="pb-8 px-12 pt-12">
             <CardTitle className="text-2xl font-bold text-white text-center">Welcome Back</CardTitle>
-            <CardDescription className="text-slate-300 text-center">
+            <CardDescription className="text-slate-300 text-center text-base">
               Sign in to access your documents
             </CardDescription>
           </CardHeader>
           
-          <CardContent className="px-8 pb-4">
+          <CardContent className="px-12 pb-8">
             <form onSubmit={handleSubmit}>
               {error && (
-                <div className="mb-6 bg-red-500/20 border border-red-500/30 text-red-200 p-4 rounded-xl text-sm backdrop-blur-sm">
+                <div className="mb-8 bg-red-500/20 border border-red-500/30 text-red-200 p-4 rounded-xl text-sm backdrop-blur-sm">
                   {error}
                 </div>
               )}
-              <div className="flex flex-col gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-slate-200">Email</Label>
+              <div className="flex flex-col gap-10">
+                <div className="space-y-3">
+                  <Label htmlFor="email" className="text-slate-200 text-base">Email</Label>
                   <Input
                     id="email"
                     type="email"
@@ -73,34 +72,34 @@ export const Login = () => {
                     value={email}
                     onChange={(e: any) => setEmail(e.target.value)}
                     required
-                    className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 rounded-xl h-12"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 rounded-xl h-14"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-slate-200">Password</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="password" className="text-slate-200 text-base">Password</Label>
                   <Input 
                     id="password" 
                     type="password" 
                     value={password}
                     onChange={(e: any) => setPassword(e.target.value)}
                     required 
-                    className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 rounded-xl h-12"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 rounded-xl h-14"
                   />
                 </div>
               </div>
             </form>
           </CardContent>
           
-          <CardFooter className="flex-col gap-3 px-8 pb-8">
+          <CardFooter className="flex-col gap-6 px-12 pb-12">
             <Button 
               type="submit" 
-              className="w-full h-12 text-base font-semibold rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg shadow-blue-500/25" 
+              className="w-full h-14 text-base font-semibold rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg shadow-blue-500/25" 
               onClick={handleSubmit} 
               loading={login.isPending}
             >
               Sign In
             </Button>
-            <p className="text-slate-400 text-sm">
+            <p className="text-slate-400 text-base">
               Don't have an account?{" "}
               <Link to="/register" className="text-blue-400 hover:text-blue-300 font-medium">
                 Sign up
@@ -108,10 +107,6 @@ export const Login = () => {
             </p>
           </CardFooter>
         </Card>
-
-        <p className="text-center text-slate-500 text-xs mt-6">
-          AI Document Workflow Automation Platform
-        </p>
       </div>
     </div>
   );

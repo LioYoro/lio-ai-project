@@ -41,83 +41,83 @@ export const Register = () => {
       </div>
 
       <div className="w-full max-w-md relative z-10">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4 shadow-lg shadow-blue-500/30">
-            <Sparkles className="w-8 h-8 text-white" />
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl mb-6 shadow-lg shadow-blue-500/30">
+            <Sparkles className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">LioYoro</h1>
-          <p className="text-slate-400 mt-1">Hikari Systems</p>
+          <h1 className="text-3xl font-bold text-white tracking-tight">LioYoro | Hikari Systems</h1>
+          <p className="text-slate-400 mt-2 text-lg">DocFlow: AI Document Workflow Automation Platform</p>
         </div>
 
         <Card className="w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl shadow-slate-500/20">
-          <div className="p-8">
+          <div className="p-10">
             <h2 className="text-2xl font-bold text-white text-center mb-2">Create Account</h2>
-            <p className="text-slate-400 text-center mb-6">Join the document automation platform</p>
+            <p className="text-slate-400 text-center mb-8">Join the document automation platform</p>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-8">
               {error && (
                 <div className="bg-red-500/20 border border-red-500/30 text-red-200 p-4 rounded-xl text-sm backdrop-blur-sm">
                   {error}
                 </div>
               )}
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-200">Full Name</label>
+              <div className="space-y-3">
+                <label className="text-base font-medium text-slate-200">Full Name</label>
                 <Input
                   type="text"
                   value={fullName}
                   onChange={(e: any) => setFullName(e.target.value)}
                   placeholder="John Doe"
-                  className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 rounded-xl h-12"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 rounded-xl h-14"
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-200">Email</label>
+              <div className="space-y-3">
+                <label className="text-base font-medium text-slate-200">Email</label>
                 <Input
                   type="email"
                   value={email}
                   onChange={(e: any) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
-                  className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 rounded-xl h-12"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 rounded-xl h-14"
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-200">Password</label>
+              <div className="space-y-3">
+                <label className="text-base font-medium text-slate-200">Password</label>
                 <Input
                   type="password"
                   value={password}
                   onChange={(e: any) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 rounded-xl h-12"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 rounded-xl h-14"
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-200">Confirm Password</label>
+              <div className="space-y-3">
+                <label className="text-base font-medium text-slate-200">Confirm Password</label>
                 <Input
                   type="password"
                   value={confirmPassword}
                   onChange={(e: any) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 rounded-xl h-12"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 rounded-xl h-14"
                 />
               </div>
 
               <Button 
                 type="submit" 
-                className="w-full h-12 text-base font-semibold rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg shadow-blue-500/25 mt-2"
+                className="w-full h-14 text-base font-semibold rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg shadow-blue-500/25"
                 loading={register.isPending}
               >
                 Create Account
               </Button>
             </form>
 
-            <p className="text-slate-400 text-center mt-6 text-sm">
+            <p className="text-slate-400 text-center mt-8 text-base">
               Already have an account?{" "}
               <Link to="/login" className="text-blue-400 hover:text-blue-300 font-medium">
                 Sign in
@@ -125,10 +125,6 @@ export const Register = () => {
             </p>
           </div>
         </Card>
-
-        <p className="text-center text-slate-500 text-xs mt-6">
-          AI Document Workflow Automation Platform
-        </p>
       </div>
     </div>
   );
