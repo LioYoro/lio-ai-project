@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useDocuments } from "../hooks/useDocuments";
 import { Navbar } from "../components/layout/Navbar";
-import { Card } from "../components/ui/Card";
-import { Button } from "../components/ui/Button";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Upload, FileText, RefreshCw } from "lucide-react";
 
 // Helper to format field values properly (handles objects, arrays, strings)

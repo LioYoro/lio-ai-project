@@ -1,39 +1,27 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navbar } from "../components/layout/Navbar";
-import { Card } from "../components/ui/Card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { TableRowSkeleton } from "@/components/ui/skeleton";
 import {
-  getAdminDocuments,
-  deleteAdminDocument,
-  reprocessAdminDocument,
-  updateAdminDocument,
-  AdminDocument,
-} from "../lib/adminApi";
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import { getAdminDocuments, deleteAdminDocument, reprocessAdminDocument, updateAdminDocument, AdminDocument } from "../lib/adminApi";
+import { Pencil, RotateCcw, Trash2, ChevronLeft, ChevronRight, FileText, Search, X, Check } from "lucide-react";
 
-const DOCUMENT_TYPES = [
-  "invoice",
-  "receipt",
-  "contract",
-  "report",
-  "form",
-  "other",
-];
-
-const STATUS_COLORS: Record<string, string> = {
-  completed: "bg-green-100 text-green-700",
-  processing: "bg-yellow-100 text-yellow-700",
-  failed: "bg-red-100 text-red-700",
-  pending: "bg-gray-100 text-gray-700",
-};
+const DOCUMENT_TYPES = ["invoice", "receipt", "contract", "report", "form", "other"];
 
 export const AdminDocuments = () => {
   const [page, setPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<Record<string, any>>({});
   const queryClient = useQueryClient();
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["admin-documents", page, statusFilter],
     queryFn: () => getAdminDocuments(page, 10, statusFilter || undefined),
   });
@@ -48,14 +36,11 @@ export const AdminDocuments = () => {
 
   const reprocessMutation = useMutation({
     mutationFn: reprocessAdminDocument,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-documents"] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-documents"] }),
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) =>
-      updateAdminDocument(id, data),
+    mutationFn: ({ id, data }: { id: string; data: any }) => updateAdminDocument(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-documents"] });
       setEditingId(null);
@@ -64,24 +49,16 @@ export const AdminDocuments = () => {
   });
 
   const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this document?")) {
-      deleteMutation.mutate(id);
-    }
+    if (confirm("Delete this document?")) deleteMutation.mutate(id);
   };
 
   const handleReprocess = (id: string) => {
-    if (confirm("Are you sure you want to reprocess this document?")) {
-      reprocessMutation.mutate(id);
-    }
+    if (confirm("Reprocess this document?")) reprocessMutation.mutate(id);
   };
 
   const handleEditStart = (doc: AdminDocument) => {
     setEditingId(doc.id);
-    setEditData({
-      document_type: doc.document_type || "",
-      notes: doc.notes || "",
-      is_verified: doc.is_verified || false,
-    });
+    setEditData({ document_type: doc.document_type || "", notes: doc.notes || "", is_verified: doc.is_verified || false });
   };
 
   const handleEditSave = (id: string) => {
@@ -93,242 +70,179 @@ export const AdminDocuments = () => {
 
   if (isLoading) {
     return (
-      <div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <Navbar isLoggedIn={true} />
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <p className="text-gray-600">Loading documents...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div>
-        <Navbar isLoggedIn={true} />
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <p className="text-red-600">Error loading documents</p>
+        <div className="max-w-7xl mx-auto px-6 py-10">
+          <Card className="border-0 shadow-lg rounded-2xl">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50">
+                    <TableHead>File Name</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Verified</TableHead>
+                    <TableHead>Notes</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {[1,2,3,4,5].map(i => <TableRowSkeleton key={i} columns={6} />)}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <Navbar isLoggedIn={true} />
 
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold mb-2">Manage Documents</h1>
-        <p className="text-gray-600 mb-8">View, edit, and manage all documents</p>
+      <div className="max-w-7xl mx-auto px-6 py-10">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-slate-900">Manage Documents</h1>
+          <p className="text-slate-500 mt-1">View, edit, and manage all uploaded documents</p>
+        </div>
 
-        {/* Filters */}
-        <Card className="mb-6">
-          <div className="flex gap-4 items-end">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Filter by Status
-              </label>
-              <select
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
-              >
-                <option value="">All Statuses</option>
-                <option value="completed">Completed</option>
-                <option value="processing">Processing</option>
-                <option value="failed">Failed</option>
-                <option value="pending">Pending</option>
-              </select>
-            </div>
-          </div>
+        <Card className="border-0 shadow-lg shadow-slate-200/50 rounded-2xl overflow-hidden mb-6">
+          <CardContent className="p-4">
+            <select
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+              className="h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"
+            >
+              <option value="">All Status</option>
+              <option value="completed">Completed</option>
+              <option value="processing">Processing</option>
+              <option value="failed">Failed</option>
+              <option value="pending">Pending</option>
+            </select>
+          </CardContent>
         </Card>
 
-        {/* Documents Table */}
-        <Card>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-semibold">File Name</th>
-                  <th className="text-left py-3 px-4 font-semibold">Status</th>
-                  <th className="text-left py-3 px-4 font-semibold">Type</th>
-                  <th className="text-left py-3 px-4 font-semibold">Verified</th>
-                  <th className="text-left py-3 px-4 font-semibold">Notes</th>
-                  <th className="text-left py-3 px-4 font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
+        <Card className="border-0 shadow-lg shadow-slate-200/50 rounded-2xl overflow-hidden">
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gradient-to-r from-slate-50 to-slate-100 border-b-2 border-slate-200">
+                  <TableHead className="font-bold text-slate-700">File Name</TableHead>
+                  <TableHead className="font-bold text-slate-700">Status</TableHead>
+                  <TableHead className="font-bold text-slate-700">Type</TableHead>
+                  <TableHead className="font-bold text-slate-700">Verified</TableHead>
+                  <TableHead className="font-bold text-slate-700">Notes</TableHead>
+                  <TableHead className="font-bold text-slate-700">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {documents.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-gray-600">
-                      No documents found
-                    </td>
-                  </tr>
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-16 text-slate-400">
+                      <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p className="text-lg">No documents found</p>
+                    </TableCell>
+                  </TableRow>
                 ) : (
                   documents.map((doc: AdminDocument) => (
-                    <tr key={doc.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4">
-                        <div>
-                          <p className="font-medium text-gray-900">
-                            {doc.filename}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {new Date(doc.created_at).toLocaleString()}
-                          </p>
+                    <TableRow key={doc.id} className="hover:bg-slate-50/50 transition-colors">
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
+                            <FileText className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-800">{doc.filename}</p>
+                            <p className="text-xs text-slate-400">{new Date(doc.created_at).toLocaleString()}</p>
+                          </div>
                         </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`px-2 py-1 rounded text-xs font-medium ${
-                            STATUS_COLORS[doc.status] || "bg-gray-100 text-gray-700"
-                          }`}
-                        >
-                          {doc.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={doc.status as any} className="capitalize">{doc.status}</Badge>
+                      </TableCell>
+                      <TableCell>
                         {editingId === doc.id ? (
                           <select
                             value={editData.document_type || ""}
-                            onChange={(e) =>
-                              setEditData({
-                                ...editData,
-                                document_type: e.target.value || null,
-                              })
-                            }
-                            className="px-2 py-1 border border-gray-300 rounded text-xs"
+                            onChange={(e) => setEditData({ ...editData, document_type: e.target.value || null })}
+                            className="h-8 px-2 rounded-lg border border-slate-200 text-sm"
                           >
-                            <option value="">Select Type</option>
-                            {DOCUMENT_TYPES.map((type) => (
-                              <option key={type} value={type}>
-                                {type}
-                              </option>
-                            ))}
+                            <option value="">Select</option>
+                            {DOCUMENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                           </select>
                         ) : (
-                          <span className="text-gray-600">
-                            {doc.document_type || "-"}
-                          </span>
+                          <span className="text-slate-600">{doc.document_type || "—"}</span>
                         )}
-                      </td>
-                      <td className="py-3 px-4">
+                      </TableCell>
+                      <TableCell>
                         {editingId === doc.id ? (
-                          <input
-                            type="checkbox"
-                            checked={editData.is_verified || false}
-                            onChange={(e) =>
-                              setEditData({
-                                ...editData,
-                                is_verified: e.target.checked,
-                              })
-                            }
-                            className="w-4 h-4 cursor-pointer"
-                          />
+                          <button
+                            onClick={() => setEditData({ ...editData, is_verified: !editData.is_verified })}
+                            className={`h-6 w-6 rounded-lg flex items-center justify-center transition-colors ${editData.is_verified ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                          >
+                            {editData.is_verified && <Check className="h-4 w-4 text-white" />}
+                          </button>
                         ) : (
-                          <input
-                            type="checkbox"
-                            checked={doc.is_verified}
-                            disabled
-                            className="w-4 h-4"
-                          />
+                          <div className={`h-6 w-6 rounded-lg flex items-center justify-center ${doc.is_verified ? 'bg-emerald-500' : 'bg-slate-200'}`}>
+                            {doc.is_verified && <Check className="h-4 w-4 text-white" />}
+                          </div>
                         )}
-                      </td>
-                      <td className="py-3 px-4 max-w-xs">
+                      </TableCell>
+                      <TableCell className="max-w-[180px]">
                         {editingId === doc.id ? (
-                          <input
-                            type="text"
+                          <Input
                             value={editData.notes || ""}
-                            onChange={(e) =>
-                              setEditData({
-                                ...editData,
-                                notes: e.target.value,
-                              })
-                            }
+                            onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
                             placeholder="Add notes..."
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-xs"
+                            className="h-8"
                           />
                         ) : (
-                          <p className="text-gray-600 truncate">
-                            {doc.notes || "-"}
-                          </p>
+                          <span className="text-slate-500 truncate block">{doc.notes || "—"}</span>
                         )}
-                      </td>
-                      <td className="py-3 px-4">
+                      </TableCell>
+                      <TableCell>
                         <div className="flex gap-2">
                           {editingId === doc.id ? (
                             <>
-                              <button
-                                onClick={() => handleEditSave(doc.id)}
-                                disabled={updateMutation.isPending}
-                                className="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600 disabled:opacity-50"
-                              >
+                              <Button size="sm" variant="success" onClick={() => handleEditSave(doc.id)} disabled={updateMutation.isPending}>
                                 Save
-                              </button>
-                              <button
-                                onClick={() => setEditingId(null)}
-                                className="px-2 py-1 bg-gray-400 text-white rounded text-xs hover:bg-gray-500"
-                              >
-                                Cancel
-                              </button>
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => setEditingId(null)}>Cancel</Button>
                             </>
                           ) : (
                             <>
-                              <button
-                                onClick={() => handleEditStart(doc)}
-                                className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleReprocess(doc.id)}
-                                disabled={reprocessMutation.isPending}
-                                className="px-2 py-1 bg-orange-500 text-white rounded text-xs hover:bg-orange-600 disabled:opacity-50"
-                              >
-                                Reprocess
-                              </button>
-                              <button
-                                onClick={() => handleDelete(doc.id)}
-                                disabled={deleteMutation.isPending}
-                                className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 disabled:opacity-50"
-                              >
-                                Delete
-                              </button>
+                              <Button size="sm" variant="outline" onClick={() => handleEditStart(doc)} className="hover:bg-blue-50 hover:border-blue-300">
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                              <Button size="sm" variant="warning" onClick={() => handleReprocess(doc.id)} disabled={reprocessMutation.isPending} className="hover:bg-amber-50 hover:border-amber-300">
+                                <RotateCcw className="h-3 w-3" />
+                              </Button>
+                              <Button size="sm" variant="destructive" onClick={() => handleDelete(doc.id)} disabled={deleteMutation.isPending}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
                             </>
                           )}
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))
                 )}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
 
-          {/* Pagination */}
-          <div className="flex justify-between items-center mt-6 pt-6 border-t">
-            <p className="text-sm text-gray-600">
-              Page {page} of {totalPages}
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50"
-              >
-                Next
-              </button>
+            <div className="flex items-center justify-between p-5 border-t bg-slate-50/50">
+              <p className="text-sm text-slate-500">Page {page} of {totalPages}</p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </div>
+          </CardContent>
         </Card>
       </div>
     </div>

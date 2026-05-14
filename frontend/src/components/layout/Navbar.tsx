@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
-import { Button } from "../ui/Button";
+import { Button } from "@/components/ui/button";
 
 export const Navbar = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
   const { logout } = useAuth();

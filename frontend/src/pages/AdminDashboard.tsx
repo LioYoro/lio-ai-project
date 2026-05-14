@@ -1,11 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "../components/layout/Navbar";
-import { Card } from "../components/ui/Card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { StatsCardSkeleton } from "@/components/ui/skeleton";
 import { getAdminStats } from "../lib/adminApi";
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, LineChart, Line 
 } from "recharts";
+import { 
+  Users, FileText, Clock, TrendingUp, 
+  CheckCircle, XCircle, AlertCircle, Upload,
+  BarChart3, PieChart as PieChartIcon, Activity, Zap
+} from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
   completed: "#10b981",
@@ -16,6 +23,26 @@ const STATUS_COLORS: Record<string, string> = {
 
 const FILE_TYPE_COLORS = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#6366f1", "#14b8a6"];
 
+const StatCard = ({ title, value, icon: Icon, color, delay }: any) => (
+  <div 
+    className="group relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1"
+    style={{ animationDelay: `${delay}ms` }}
+  >
+    <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500`} 
+      style={{ background: `linear-gradient(135deg, ${color}10 0%, transparent 100%)` }} 
+    />
+    <div className="relative flex items-center justify-between">
+      <div>
+        <p className="text-sm font-medium text-slate-500">{title}</p>
+        <p className="mt-2 text-4xl font-bold" style={{ color }}>{value}</p>
+      </div>
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl" style={{ backgroundColor: `${color}15` }}>
+        <Icon className="h-7 w-7" style={{ color }} />
+      </div>
+    </div>
+  </div>
+);
+
 export const AdminDashboard = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ["admin-stats"],
@@ -25,16 +52,17 @@ export const AdminDashboard = () => {
 
   if (isLoading) {
     return (
-      <div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <Navbar isLoggedIn={true} />
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <p className="text-gray-600">Loading stats...</p>
+        <div className="max-w-7xl mx-auto px-6 py-10">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {[1,2,3,4].map(i => <StatsCardSkeleton key={i} />)}
+          </div>
         </div>
       </div>
     );
   }
 
-  // Status chart data
   const statusData = stats?.documents_by_status ? [
     { name: "Completed", value: stats.documents_by_status.completed || 0, fill: STATUS_COLORS.completed },
     { name: "Failed", value: stats.documents_by_status.failed || 0, fill: STATUS_COLORS.failed },
@@ -42,35 +70,14 @@ export const AdminDashboard = () => {
     { name: "Processing", value: stats.documents_by_status.processing || 0, fill: STATUS_COLORS.processing },
   ] : [];
 
-  // Users by month data
   const usersByMonthData = stats?.users_by_month ? Object.entries(stats.users_by_month).map(([month, count]) => ({
     month,
     users: count,
   })) : [];
 
-  // Documents by month data
   const docsByMonthData = stats?.documents_by_month ? Object.entries(stats.documents_by_month).map(([month, count]) => ({
     month,
     documents: count,
-  })) : [];
-
-  // File type data
-  const fileTypeData = stats?.file_type_breakdown ? Object.entries(stats.file_type_breakdown).map(([type, count], index) => ({
-    name: type.toUpperCase(),
-    value: count,
-    fill: FILE_TYPE_COLORS[index % FILE_TYPE_COLORS.length],
-  })) : [];
-
-  // Document type from extracted_data
-  const extractedTypeData = stats?.extracted_document_types ? Object.entries(stats.extracted_document_types).map(([type, count]) => ({
-    name: type,
-    value: count,
-  })) : [];
-
-  // Document type from column
-  const docTypeData = stats?.document_type_breakdown ? Object.entries(stats.document_type_breakdown).map(([type, count]) => ({
-    name: type || "Unknown",
-    value: count,
   })) : [];
 
   const totalDocs = stats?.total_documents || 0;
@@ -79,214 +86,226 @@ export const AdminDashboard = () => {
   const pendingDocs = (stats?.documents_by_status?.pending || 0) + (stats?.documents_by_status?.processing || 0);
 
   return (
-    <div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <Navbar isLoggedIn={true} />
 
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold mb-2">Admin Dashboard</h1>
-        <p className="text-gray-600 mb-8">System-wide document processing overview</p>
-
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <h3 className="text-sm font-medium text-gray-600 mb-2">Total Documents</h3>
-            <p className="text-3xl font-bold text-blue-600">{totalDocs}</p>
-          </Card>
-          <Card>
-            <h3 className="text-sm font-medium text-gray-600 mb-2">Completed</h3>
-            <p className="text-3xl font-bold text-green-600">{completedDocs}</p>
-          </Card>
-          <Card>
-            <h3 className="text-sm font-medium text-gray-600 mb-2">Failed</h3>
-            <p className="text-3xl font-bold text-red-600">{failedDocs}</p>
-          </Card>
-          <Card>
-            <h3 className="text-sm font-medium text-gray-600 mb-2">Pending/Processing</h3>
-            <p className="text-3xl font-bold text-amber-600">{pendingDocs}</p>
-          </Card>
+      <div className="max-w-7xl mx-auto px-6 py-10">
+        {/* Header */}
+        <div className="mb-10">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="h-2 w-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" />
+            <span className="text-sm font-medium text-slate-500">Admin Panel</span>
+          </div>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+            Dashboard
+          </h1>
+          <p className="text-slate-500 mt-2">Overview of your document processing system</p>
         </div>
 
-        {/* Status Overview */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <Card>
-            <h2 className="text-lg font-bold mb-4">Document Status Overview</h2>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={statusData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-
-          <Card>
-            <h2 className="text-lg font-bold mb-4">Status Distribution</h2>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={statusData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, value }) => `${name}: ${value}`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {statusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </Card>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          <StatCard title="Total Documents" value={totalDocs} icon={FileText} color="#3b82f6" delay={0} />
+          <StatCard title="Completed" value={completedDocs} icon={CheckCircle} color="#10b981" delay={100} />
+          <StatCard title="Failed" value={failedDocs} icon={XCircle} color="#ef4444" delay={200} />
+          <StatCard title="Pending" value={pendingDocs} icon={Clock} color="#f59e0b" delay={300} />
         </div>
 
-        {/* Trends */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <Card>
-            <h2 className="text-lg font-bold mb-4">Users Registration (Last 6 Months)</h2>
-            {usersByMonthData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={usersByMonthData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="users" stroke="#8b5cf6" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-gray-500 text-center py-8">No user data available</p>
-            )}
-          </Card>
-
-          <Card>
-            <h2 className="text-lg font-bold mb-4">Documents Uploaded (Last 6 Months)</h2>
-            {docsByMonthData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={docsByMonthData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="documents" stroke="#3b82f6" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-gray-500 text-center py-8">No document data available</p>
-            )}
-          </Card>
-        </div>
-
-        {/* File Types & Document Types */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <Card>
-            <h2 className="text-lg font-bold mb-4">File Types (by extension)</h2>
-            {fileTypeData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={fileTypeData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis type="category" dataKey="name" width={60} />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+        {/* Charts Row 1 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+          <Card className="border-0 shadow-lg shadow-slate-200/50 rounded-2xl overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg font-semibold text-slate-800">
+                <BarChart3 className="h-5 w-5 text-blue-600" />
+                Document Status Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={statusData} barSize={40}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="name" className="text-xs" />
+                  <YAxis className="text-xs" />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}
+                  />
+                  <Bar dataKey="value" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
-            ) : (
-              <p className="text-gray-500 text-center py-8">No file type data available</p>
-            )}
+            </CardContent>
           </Card>
 
-          <Card>
-            <h2 className="text-lg font-bold mb-4">Document Types (from extracted data)</h2>
-            {extractedTypeData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
+          <Card className="border-0 shadow-lg shadow-slate-200/50 rounded-2xl overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg font-semibold text-slate-800">
+                <PieChartIcon className="h-5 w-5 text-emerald-600" />
+                Status Distribution
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    data={extractedTypeData}
+                    data={statusData}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
                     label={({ name, value }) => `${name}: ${value}`}
-                    outerRadius={80}
+                    outerRadius={110}
+                    innerRadius={60}
                     fill="#8884d8"
                     dataKey="value"
+                    paddingAngle={4}
                   >
-                    {extractedTypeData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={FILE_TYPE_COLORS[index % FILE_TYPE_COLORS.length]} />
+                    {statusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
-            ) : docTypeData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={docTypeData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, value }) => `${name}: ${value}`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {docTypeData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={FILE_TYPE_COLORS[index % FILE_TYPE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-gray-500 text-center py-8">No document type data available</p>
-            )}
+            </CardContent>
           </Card>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <h3 className="text-sm font-medium text-gray-600 mb-2">Total Users</h3>
-            <p className="text-3xl font-bold text-purple-600">{stats?.users_count || 0}</p>
+        {/* Charts Row 2 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+          <Card className="border-0 shadow-lg shadow-slate-200/50 rounded-2xl overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg font-semibold text-slate-800">
+                <TrendingUp className="h-5 w-5 text-purple-600" />
+                User Registrations
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              {usersByMonthData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={usersByMonthData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="month" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="users" stroke="#8b5cf6" strokeWidth={3} dot={{ fill: "#8b5cf6", r: 5 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-64 flex items-center justify-center text-slate-400">
+                  <div className="text-center">
+                    <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>No user data available</p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
           </Card>
-          <Card>
-            <h3 className="text-sm font-medium text-gray-600 mb-2">Documents Today</h3>
-            <p className="text-3xl font-bold text-indigo-600">{stats?.documents_today || 0}</p>
+
+          <Card className="border-0 shadow-lg shadow-slate-200/50 rounded-2xl overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-cyan-50 to-blue-50 pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg font-semibold text-slate-800">
+                <Activity className="h-5 w-5 text-cyan-600" />
+                Documents Uploaded
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              {docsByMonthData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={docsByMonthData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="month" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="documents" stroke="#06b6d4" strokeWidth={3} dot={{ fill: "#06b6d4", r: 5 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-64 flex items-center justify-center text-slate-400">
+                  <div className="text-center">
+                    <Upload className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>No document data available</p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
           </Card>
-          <Card>
-            <h3 className="text-sm font-medium text-gray-600 mb-2">Avg Processing Time</h3>
-            <p className="text-3xl font-bold text-cyan-600">
-              {stats?.avg_processing_time_seconds 
-                ? `${Math.round(stats.avg_processing_time_seconds)}s` 
-                : "N/A"}
-            </p>
-          </Card>
+        </div>
+
+        {/* Quick Stats Row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg shadow-purple-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-purple-100 text-sm">Total Users</p>
+                <p className="text-4xl font-bold mt-2">{stats?.users_count || 0}</p>
+              </div>
+              <Users className="h-10 w-10 text-purple-200" />
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg shadow-indigo-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-indigo-100 text-sm">Today's Uploads</p>
+                <p className="text-4xl font-bold mt-2">{stats?.documents_today || 0}</p>
+              </div>
+              <Zap className="h-10 w-10 text-indigo-200" />
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl p-6 text-white shadow-lg shadow-amber-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-amber-100 text-sm">Avg Processing Time</p>
+                <p className="text-4xl font-bold mt-2">
+                  {stats?.avg_processing_time_seconds 
+                    ? `${Math.round(stats.avg_processing_time_seconds)}s` 
+                    : "N/A"}
+                </p>
+              </div>
+              <Clock className="h-10 w-10 text-amber-200" />
+            </div>
+          </div>
         </div>
 
         {/* Quick Actions */}
-        <div>
-          <h2 className="text-2xl font-bold mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a href="/admin/documents" className="block p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition">
-              <h3 className="font-semibold text-blue-900">Manage Documents</h3>
-              <p className="text-sm text-blue-700">View and manage all documents</p>
-            </a>
-            <a href="/admin/audit-logs" className="block p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition">
-              <h3 className="font-semibold text-green-900">Audit Logs</h3>
-              <p className="text-sm text-green-700">Track system activity and changes</p>
-            </a>
-            <a href="/admin/users" className="block p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition">
-              <h3 className="font-semibold text-purple-900">Manage Users</h3>
-              <p className="text-sm text-purple-700">View all users and their roles</p>
-            </a>
-          </div>
-        </div>
+        <Card className="border-0 shadow-lg shadow-slate-200/50 rounded-2xl overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 pb-4">
+            <CardTitle className="text-lg font-semibold text-slate-800">Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <a href="/admin/documents" className="group flex items-center gap-4 p-5 rounded-xl border-2 border-slate-100 hover:border-blue-300 hover:bg-blue-50/50 transition-all">
+                <div className="h-12 w-12 rounded-xl bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                  <FileText className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-800">Manage Documents</p>
+                  <p className="text-sm text-slate-500">View and manage all</p>
+                </div>
+              </a>
+
+              <a href="/admin/audit-logs" className="group flex items-center gap-4 p-5 rounded-xl border-2 border-slate-100 hover:border-emerald-300 hover:bg-emerald-50/50 transition-all">
+                <div className="h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
+                  <AlertCircle className="h-6 w-6 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-800">Audit Logs</p>
+                  <p className="text-sm text-slate-500">Track system activity</p>
+                </div>
+              </a>
+
+              <a href="/admin/users" className="group flex items-center gap-4 p-5 rounded-xl border-2 border-slate-100 hover:border-purple-300 hover:bg-purple-50/50 transition-all">
+                <div className="h-12 w-12 rounded-xl bg-purple-100 flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                  <Users className="h-6 w-6 text-purple-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-800">Manage Users</p>
+                  <p className="text-sm text-slate-500">View all users and roles</p>
+                </div>
+              </a>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

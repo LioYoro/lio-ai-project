@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useDocuments } from "../hooks/useDocuments";
 import { Navbar } from "../components/layout/Navbar";
-import { Card } from "../components/ui/Card";
+import { Card } from "@/components/ui/card";
 import apiClient from "../lib/api";
 
 export const Dashboard = () => {

@@ -1,20 +1,25 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "../components/layout/Navbar";
-import { Card } from "../components/ui/Card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getAdminAuditLogs, AuditLog } from "../lib/adminApi";
+import { ChevronLeft, ChevronRight, Search, User, FileText, Clock, AlertCircle } from "lucide-react";
 
-const ACTION_COLORS: Record<string, string> = {
-  processing_started: "bg-blue-100 text-blue-700",
-  ocr_completed: "bg-green-100 text-green-700",
-  extraction_completed: "bg-green-100 text-green-700",
-  processing_failed: "bg-red-100 text-red-700",
-  document_deleted: "bg-red-100 text-red-700",
-  document_updated: "bg-yellow-100 text-yellow-700",
-  document_verified: "bg-green-100 text-green-700",
-  document_reprocessed: "bg-orange-100 text-orange-700",
-  user_login: "bg-blue-100 text-blue-700",
-  user_register: "bg-blue-100 text-blue-700",
+const ACTION_CONFIG: Record<string, { variant: string; label: string }> = {
+  processing_started: { variant: "info", label: "Processing Started" },
+  ocr_completed: { variant: "success", label: "OCR Completed" },
+  extraction_completed: { variant: "success", label: "Extraction Completed" },
+  processing_failed: { variant: "failed", label: "Processing Failed" },
+  document_deleted: { variant: "failed", label: "Document Deleted" },
+  document_updated: { variant: "warning", label: "Document Updated" },
+  document_verified: { variant: "success", label: "Document Verified" },
+  document_reprocessed: { variant: "warning", label: "Document Reprocessed" },
+  user_login: { variant: "info", label: "User Login" },
+  user_register: { variant: "info", label: "User Register" },
 };
 
 export const AdminAuditLog = () => {
@@ -26,12 +31,7 @@ export const AdminAuditLog = () => {
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-audit-logs", page, actionFilter, emailFilter],
     queryFn: () =>
-      getAdminAuditLogs(
-        page,
-        20,
-        emailFilter || undefined,
-        actionFilter || undefined
-      ),
+      getAdminAuditLogs(page, 20, emailFilter || undefined, actionFilter || undefined),
   });
 
   const logs = data?.logs || [];
@@ -39,10 +39,16 @@ export const AdminAuditLog = () => {
 
   if (isLoading) {
     return (
-      <div>
+      <div className="min-h-screen bg-slate-50">
         <Navbar isLoggedIn={true} />
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <p className="text-gray-600">Loading audit logs...</p>
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              {[1,2,3,4,5].map(i => (
+                <div key={i} className="h-16 rounded-lg bg-slate-100 animate-pulse" />
+              ))}
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -50,52 +56,49 @@ export const AdminAuditLog = () => {
 
   if (error) {
     return (
-      <div>
+      <div className="min-h-screen bg-slate-50">
         <Navbar isLoggedIn={true} />
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <p className="text-red-600">Error loading audit logs</p>
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <p className="text-red-600">Error loading audit logs</p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-slate-50">
       <Navbar isLoggedIn={true} />
 
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold mb-2">Audit Logs</h1>
-        <p className="text-gray-600 mb-8">Track system activity and changes</p>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-slate-900">Audit Logs</h1>
+          <p className="text-slate-500 mt-1">Track system activity and changes</p>
+        </div>
 
         {/* Filters */}
         <Card className="mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Filter by Email
-              </label>
-              <input
-                type="text"
+          <CardContent className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                placeholder="Search by email..."
                 value={emailFilter}
                 onChange={(e) => {
                   setEmailFilter(e.target.value);
                   setPage(1);
                 }}
-                placeholder="Search email..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                icon={<Search className="h-4 w-4" />}
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Filter by Action
-              </label>
               <select
                 value={actionFilter}
                 onChange={(e) => {
                   setActionFilter(e.target.value);
                   setPage(1);
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                className="h-10 px-3 rounded-md border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
               >
                 <option value="">All Actions</option>
                 <option value="processing_started">Processing Started</option>
@@ -110,100 +113,97 @@ export const AdminAuditLog = () => {
                 <option value="user_register">User Register</option>
               </select>
             </div>
-          </div>
+          </CardContent>
         </Card>
 
-        {/* Audit Logs Table */}
+        {/* Audit Logs */}
         <Card>
-          <div className="space-y-2">
+          <CardContent className="p-4">
             {logs.length === 0 ? (
-              <p className="py-8 text-center text-gray-600">No audit logs found</p>
+              <div className="text-center py-12 text-slate-500">
+                No audit logs found
+              </div>
             ) : (
-              logs.map((log: AuditLog) => (
-                <div
-                  key={log.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span
-                          className={`px-2 py-1 rounded text-xs font-semibold ${
-                            ACTION_COLORS[log.action] ||
-                            "bg-gray-100 text-gray-700"
-                          }`}
-                        >
-                          {log.action}
-                        </span>
-                        <span className="text-sm text-gray-500">
-                          {new Date(log.created_at).toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <p className="text-gray-500">User</p>
-                          <p className="text-gray-900">
-                            {log.user_email || "System"}
-                          </p>
+              <div className="space-y-3">
+                {logs.map((log: any) => (
+                  <div
+                    key={log.id}
+                    className="border border-slate-200 rounded-lg p-4 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Badge variant={log.action as any}>
+                            {ACTION_CONFIG[log.action]?.label || log.action}
+                          </Badge>
+                          <span className="text-sm text-slate-500 flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {new Date(log.created_at).toLocaleString()}
+                          </span>
                         </div>
-                        <div>
-                          <p className="text-gray-500">Document</p>
-                          <p className="text-gray-900 truncate">
-                            {log.document_name || "-"}
-                          </p>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                          <div>
+                            <p className="text-slate-400 text-xs">User</p>
+                            <p className="text-slate-900">{log.user_email || "System"}</p>
+                          </div>
+                          <div>
+                            <p className="text-slate-400 text-xs">Document</p>
+                            <p className="text-slate-900 truncate">{log.document_name || "-"}</p>
+                          </div>
+                          {log.details && (
+                            <div className="col-span-2 md:col-span-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  setExpandedId(expandedId === log.id ? null : log.id)
+                                }
+                              >
+                                {expandedId === log.id ? "Hide" : "View"} Details
+                              </Button>
+                            </div>
+                          )}
                         </div>
-                        {log.details && (
-                          <div className="col-span-2 md:col-span-2">
-                            <p className="text-gray-500">Details</p>
-                            <button
-                              onClick={() =>
-                                setExpandedId(
-                                  expandedId === log.id ? null : log.id
-                                )
-                              }
-                              className="text-blue-600 hover:underline text-sm"
-                            >
-                              {expandedId === log.id ? "Hide" : "View"}
-                            </button>
+
+                        {expandedId === log.id && log.details && (
+                          <div className="mt-4 pt-4 border-t border-slate-200 bg-slate-50 p-3 rounded text-xs font-mono text-slate-700 overflow-auto max-h-48">
+                            <pre>{JSON.stringify(log.details, null, 2)}</pre>
                           </div>
                         )}
                       </div>
-
-                      {/* Expanded Details */}
-                      {expandedId === log.id && log.details && (
-                        <div className="mt-4 pt-4 border-t border-gray-200 bg-gray-50 p-3 rounded text-xs font-mono text-gray-700 overflow-auto max-h-48">
-                          <pre>{JSON.stringify(log.details, null, 2)}</pre>
-                        </div>
-                      )}
                     </div>
                   </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
-          </div>
 
-          {/* Pagination */}
-          <div className="flex justify-between items-center mt-6 pt-6 border-t">
-            <p className="text-sm text-gray-600">
-              Page {page} of {totalPages}
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-          </div>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                <p className="text-sm text-slate-500">
+                  Page {page} of {totalPages}
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
         </Card>
       </div>
     </div>

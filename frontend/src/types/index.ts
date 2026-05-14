@@ -23,9 +23,14 @@ export interface DocumentList {
   filename: string;
   file_type: string;
   status: string;
+  document_type?: string;
+  notes?: string;
+  is_verified?: boolean;
   raw_text?: string;
+  extracted_data?: Record<string, any>;
   confidence_score?: number;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface Workflow {

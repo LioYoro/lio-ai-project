@@ -1,12 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "../components/layout/Navbar";
-import { Card } from "../components/ui/Card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton, TableRowSkeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { getAdminUsers, AdminUser } from "../lib/adminApi";
-
-const ROLE_COLORS: Record<string, string> = {
-  admin: "bg-purple-100 text-purple-700",
-  user: "bg-gray-100 text-gray-700",
-};
+import { Users, User, Mail } from "lucide-react";
 
 export const AdminUsers = () => {
   const { data, isLoading, error } = useQuery({
@@ -14,14 +20,30 @@ export const AdminUsers = () => {
     queryFn: getAdminUsers,
   });
 
-  const users = Array.isArray(data) ? data : [];
+  const users = data || [];
 
   if (isLoading) {
     return (
-      <div>
+      <div className="min-h-screen bg-slate-50">
         <Navbar isLoggedIn={true} />
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <p className="text-gray-600">Loading users...</p>
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <Card>
+            <CardContent className="p-6">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Document Count</TableHead>
+                    <TableHead>Created At</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {[1,2,3].map(i => <TableRowSkeleton key={i} columns={4} />)}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -29,65 +51,77 @@ export const AdminUsers = () => {
 
   if (error) {
     return (
-      <div>
+      <div className="min-h-screen bg-slate-50">
         <Navbar isLoggedIn={true} />
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <p className="text-red-600">Error loading users</p>
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="pt-6">
+              <p className="text-red-600">Error loading users</p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-slate-50">
       <Navbar isLoggedIn={true} />
 
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold mb-2">Manage Users</h1>
-        <p className="text-gray-600 mb-8">View all users and their roles</p>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-slate-900">Manage Users</h1>
+          <p className="text-slate-500 mt-1">View all users and their roles</p>
+        </div>
 
-        {/* Users Table */}
         <Card>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-semibold">Email</th>
-                  <th className="text-left py-3 px-4 font-semibold">Role</th>
-                  <th className="text-left py-3 px-4 font-semibold">Created At</th>
-                </tr>
-              </thead>
-              <tbody>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-50">
+                  <TableHead className="font-semibold">Email</TableHead>
+                  <TableHead className="font-semibold">Role</TableHead>
+                  <TableHead className="font-semibold">Documents</TableHead>
+                  <TableHead className="font-semibold">Created At</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {users.length === 0 ? (
-                  <tr>
-                    <td colSpan={3} className="py-8 text-center text-gray-600">
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-12 text-slate-500">
                       No users found
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ) : (
-                  users.map((user: AdminUser) => (
-                    <tr key={user.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4">
-                        <p className="font-medium text-gray-900">{user.email}</p>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`px-2 py-1 rounded text-xs font-semibold ${
-                            ROLE_COLORS[user.role] || "bg-gray-100 text-gray-700"
-                          }`}
-                        >
+                  users.map((user: any) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
+                            <Mail className="h-4 w-4 text-slate-500" />
+                          </div>
+                          <span className="font-medium text-slate-900">{user.email}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={user.role === "admin" ? "admin" : "user"}>
                           {user.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-slate-600">{user.document_count || 0}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-slate-500">
+                          {new Date(user.created_at).toLocaleString()}
                         </span>
-                      </td>
-                      <td className="py-3 px-4 text-gray-600">
-                        {new Date(user.created_at).toLocaleString()}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))
                 )}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          </CardContent>
         </Card>
       </div>
     </div>

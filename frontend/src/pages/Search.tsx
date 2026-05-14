@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Navbar } from "../components/layout/Navbar";
-import { Card } from "../components/ui/Card";
-import { Button } from "../components/ui/Button";
-import { Input } from "../components/ui/Input";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Search as SearchIcon, FileText } from "lucide-react";
 
 interface SearchResult {

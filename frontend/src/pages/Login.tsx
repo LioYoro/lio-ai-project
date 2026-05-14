@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { Input } from "../components/ui/Input";
-import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 
 export const Login = () => {
   const [email, setEmail] = useState("");
@@ -11,7 +12,6 @@ export const Login = () => {
   const [error, setError] = useState("");
   const { login } = useAuth();
 
-  // Redirect if already logged in
   useEffect(() => {
     if (localStorage.getItem("sb-access-token")) {
       window.location.href = "/documents";
@@ -21,56 +21,76 @@ export const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
-    console.log("Attempting login with:", email);
-    
     try {
-      const result = await login.mutateAsync({ email, password });
-      console.log("Login success:", result);
+      await login.mutateAsync({ email, password });
       window.location.href = "/documents";
     } catch (err: any) {
-      console.error("Login error:", err);
       setError(err.response?.data?.detail || err.message || "Login failed");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-      <Card className="w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center mb-8">DocFlow</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl" />
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && <div className="bg-red-100 text-red-700 p-3 rounded">{error}</div>}
-
-          <Input
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="your@email.com"
-            required
-          />
-
-          <Input
-            label="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            required
-          />
-
-          <Button type="submit" variant="primary" className="w-full" loading={login.isPending}>
+      <Card className="w-full max-w-sm relative border-0 shadow-2xl shadow-slate-500/20">
+        <div className="absolute inset-0 bg-gradient-to-br from-white to-slate-50" />
+        
+        <CardHeader className="relative">
+          <CardTitle>Login to your account</CardTitle>
+          <CardDescription>
+            Enter your email below to login to your account
+          </CardDescription>
+          <CardAction>
+            <Link to="/register">
+              <Button variant="link" className="p-0">Sign Up</Button>
+            </Link>
+          </CardAction>
+        </CardHeader>
+        
+        <CardContent className="relative">
+          <form onSubmit={handleSubmit}>
+            {error && (
+              <div className="mb-4 bg-red-50 border border-red-200 text-red-600 p-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+            <div className="flex flex-col gap-6">
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  value={email}
+                  onChange={(e: any) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <div className="flex items-center">
+                  <Label htmlFor="password">Password</Label>
+                </div>
+                <Input 
+                  id="password" 
+                  type="password" 
+                  value={password}
+                  onChange={(e: any) => setPassword(e.target.value)}
+                  required 
+                />
+              </div>
+            </div>
+          </form>
+        </CardContent>
+        
+        <CardFooter className="relative flex-col gap-2">
+          <Button type="submit" className="w-full" onClick={handleSubmit} loading={login.isPending}>
             Login
           </Button>
-        </form>
-
-        <p className="text-center text-gray-600 mt-6">
-          Don't have an account?{" "}
-          <Link to="/register" className="text-blue-600 hover:underline">
-            Register here
-          </Link>
-        </p>
+        </CardFooter>
       </Card>
     </div>
   );

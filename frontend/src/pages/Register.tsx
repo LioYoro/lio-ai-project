@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { Input } from "../components/ui/Input";
-import { Button } from "../components/ui/Button";
-import { Card } from "../components/ui/Card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 export const Register = () => {
   const [email, setEmail] = useState("");
