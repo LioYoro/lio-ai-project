@@ -31,7 +31,7 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center p-10">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl" />
@@ -39,31 +39,31 @@ export const Login = () => {
       </div>
 
       <div className="w-full max-w-md relative z-10 flex flex-col items-center">
-        <div className="text-center mb-12 w-full">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl mb-6 shadow-lg shadow-blue-500/30">
+        <div className="text-center mb-16 w-full">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl mb-8 shadow-lg shadow-blue-500/30">
             <Sparkles className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight w-full">LioYoro | Hikari Systems</h1>
-          <p className="text-slate-400 mt-2 text-lg w-full">DocFlow: AI Document Workflow Automation Platform</p>
+          <p className="text-slate-400 mt-4 text-lg w-full">DocFlow: AI Document Workflow Automation Platform</p>
         </div>
 
         <Card className="w-full max-w-md bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl shadow-slate-500/20">
-          <CardHeader className="pb-8 px-12 pt-12 w-full">
+          <CardHeader className="pb-10 px-14 pt-14 w-full">
             <CardTitle className="text-2xl font-bold text-white text-center w-full">Welcome Back</CardTitle>
-            <CardDescription className="text-slate-300 text-center text-base w-full">
+            <CardDescription className="text-slate-300 text-center text-base mt-3 w-full">
               Sign in to access your documents
             </CardDescription>
           </CardHeader>
           
-          <CardContent className="px-12 pb-8 w-full">
+          <CardContent className="px-14 pb-10 w-full">
             <form onSubmit={handleSubmit} className="w-full">
               {error && (
-                <div className="mb-8 bg-red-500/20 border border-red-500/30 text-red-200 p-4 rounded-xl text-sm backdrop-blur-sm w-full">
+                <div className="mb-10 bg-red-500/20 border border-red-500/30 text-red-200 p-5 rounded-xl text-sm backdrop-blur-sm w-full">
                   {error}
                 </div>
               )}
               <div className="flex flex-col gap-10 w-full">
-                <div className="space-y-3 w-full">
+                <div className="space-y-4 w-full">
                   <Label htmlFor="email" className="text-slate-200 text-base w-full block">Email</Label>
                   <Input
                     id="email"
@@ -75,7 +75,7 @@ export const Login = () => {
                     className="bg-white/10 border-white/20 text-white placeholder:text-slate-400 rounded-xl h-14 w-full"
                   />
                 </div>
-                <div className="space-y-3 w-full">
+                <div className="space-y-4 w-full">
                   <Label htmlFor="password" className="text-slate-200 text-base w-full block">Password</Label>
                   <Input 
                     id="password" 
@@ -90,7 +90,7 @@ export const Login = () => {
             </form>
           </CardContent>
           
-          <CardFooter className="flex-col gap-6 px-12 pb-12 w-full">
+          <CardFooter className="flex-col gap-8 px-14 pb-14 w-full">
             <Button 
               type="submit" 
               className="w-full h-14 text-base font-semibold rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg shadow-blue-500/25" 
