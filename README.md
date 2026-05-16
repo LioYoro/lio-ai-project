@@ -14,20 +14,21 @@ An AI-powered document processing system that ingests scanned documents/PDFs, ex
 
 ```
                     ┌─────────────────────────────────────┐
-                    │         Vercel (FREE)                │
+                    │        Frontend (localhost:5173)     │
                     │  React + Vite + TypeScript           │
                     │  Tailwind CSS + Shadcn UI            │
                     └──────────────┬──────────────────────┘
                                    │ API calls
                     ┌──────────────▼──────────────────────┐
-                    │         Render (FREE)                │
-                    │  FastAPI + Tesseract                 │
-                    │  ARQ workers + Supabase Auth        │
+                    │        Backend (localhost:8000)       │
+                    │  FastAPI + SQLAlchemy                 │
+                    │  Tesseract OCR + PyMuPDF             │
+                    │  ARQ workers + OpenAI GPT-4o-mini   │
                     └──────────────┬──────────────────────┘
                                    │
                ┌──────────────────▼─────────────────────┐
-               │  Supabase (FREE)                         │
-               │  PostgreSQL + Auth + RLS                 │
+               │  Supabase (Cloud)                        │
+               │  PostgreSQL + pgvector + Auth + RLS      │
                └─────────────────────────────────────────┘
 ```
 

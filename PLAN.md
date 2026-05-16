@@ -6,41 +6,26 @@ An AI-powered document processing system that ingests scanned documents/PDFs, ex
 
 ---
 
-## Architecture — Deployed (Vercel + Render + Supabase)
+## Architecture
 
 ```
                     ┌─────────────────────────────────────┐
-                    │         Vercel (FREE)                │
+                    │        Frontend (localhost:5173)     │
                     │  React + Vite + TypeScript           │
                     │  Tailwind CSS + Shadcn UI            │
                     └──────────────┬──────────────────────┘
                                    │ API calls
                     ┌──────────────▼──────────────────────┐
-                    │         Render (FREE)                │
-                    │  FastAPI + Tesseract                 │
-                    │  ARQ workers + Supabase Auth         │
-                    │  ⚠ Cold start ~30s after idle       │
-                    │                                      │
-                    │  Connects to:                        │
-                    │  ┌────────┐    ┌──────────┐          │
-                    │  │Postgres│    │  Redis   │          │
-                    │  │+ vector│    │  (queue) │          │
-                    │  └───┬────┘    └────┬─────┘          │
-                    └──────┼──────────────┼────────────────┘
-                           │              │
-              ┌────────────▼──┐   ┌──────▼──────┐
-              │  Supabase     │   │  Upstash    │
-              │  (FREE)       │   │  (FREE)     │
-              │  PG + pgvector│   │  Redis      │
-              │  + Auth + RLS │   │  10k cmd/day│
-              │  500MB DB     │   └─────────────┘
-              └───────────────┘
-                    │
-              ┌─────▼──────┐
-              │ OpenAI API │
-              │ GPT-4o-mini│
-              │ (credits)  │
-              └────────────┘
+                    │        Backend (localhost:8000)       │
+                    │  FastAPI + SQLAlchemy                 │
+                    │  Tesseract OCR + PyMuPDF             │
+                    │  ARQ workers + OpenAI GPT-4o-mini   │
+                    └──────────────┬──────────────────────┘
+                                   │
+               ┌──────────────────▼─────────────────────┐
+               │  Supabase (Cloud)                        │
+               │  PostgreSQL + pgvector + Auth + RLS      │
+               └─────────────────────────────────────────┘
 ```
 
 ---
