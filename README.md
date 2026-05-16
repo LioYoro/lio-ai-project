@@ -6,7 +6,7 @@ An AI-powered document processing system that ingests scanned documents/PDFs, ex
 
 ## Project Status: Deployed & Polished
 
-**Last Updated:** May 14, 2026
+**Last Updated:** May 16, 2026
 
 ---
 
@@ -85,11 +85,13 @@ An AI-powered document processing system that ingests scanned documents/PDFs, ex
 - Recharts integration (bar, pie, line charts)
 - Responsive design
 
-### 🔜 Phase 7: Deployment — READY
+### ✅ Phase 7: Deployment — COMPLETED
 
 - [x] Dockerfile + render.yaml configured
 - [x] vercel.json configured
-- [x] Pushed to GitHub
+- [x] Frontend deployed to Vercel
+- [x] Backend deployed to Render
+- [x] GitHub CI/CD with auto-deploy
 
 ---
 
@@ -99,8 +101,8 @@ An AI-powered document processing system that ingests scanned documents/PDFs, ex
 ```bash
 cd backend
 pip install -r requirements.txt
-python start.py
-# Runs on http://localhost:8001
+python -m uvicorn app.main:app --reload
+# Runs on http://localhost:8000
 ```
 
 ### Frontend
@@ -115,31 +117,32 @@ npm run dev
 
 ## Current Notes
 
-1. **Upstash Redis:** May fail, falls back to synchronous processing
+1. **Upstash Redis:** Falls back to sync processing if unavailable
 2. **Tesseract:** Installed at `C:\Program Files\Tesseract-OCR\tesseract.exe`
-3. **OpenAI API:** GPT-4o-mini for extraction (switched from Gemini)
-4. **MiniLM:** Cold start ~5-10s, local 384-dim embeddings
+3. **OpenAI API:** GPT-4o-mini for document extraction
+4. **MiniLM:** Local 384-dim embeddings (cold start ~5-10s first request)
 5. **Frontend Auth Token:** `sb-access-token` in localStorage
-6. **Backend Port:** 8001, Frontend Port: 5173
+6. **Backend Port:** 8000/8001 • Frontend Port: 5173
 7. **Admin Email:** `singajiyu10@gmail.com`
 8. **Shadcn CLI:** Broken with Node v24 — components created manually
+9. **Free Tier Notes:** Render cold start ~30s • Supabase direct DB connection works locally
 
 ---
 
-## What This Portfolio Shows
+## Project Highlights
 
-| Skill | Evidence |
-|-------|----------|
-| Full-stack dev | React frontend + FastAPI backend |
-| AI/LLM integration | OpenAI GPT-4o-mini classification + field extraction |
-| OCR pipeline | Tesseract + PyMuPDF with confidence scoring |
-| Async processing | ARQ + Redis background workers with sync fallback |
-| Vector search | pgvector semantic search with MiniLM embeddings |
-| Admin systems | Role-based auth, audit logging, admin dashboard |
-| UI/UX | Dark theme, glassmorphism, responsive charts |
-| Database design | SQLAlchemy ORM with RLS policies + pgvector |
-| Auth/security | Supabase Auth with RLS policies |
-| Cloud deployment | Vercel + Render + Supabase ready |
+| Skill | Demonstration |
+|-------|-------------|
+| **Full-Stack Architecture** | React + TypeScript frontend with FastAPI + Python backend |
+| **AI/LLM Integration** | OpenAI GPT-4o-mini for document classification and structured field extraction with per-field confidence scoring |
+| **OCR Pipeline** | Dual-engine OCR (Tesseract for images, PyMuPDF for PDFs) with automatic format detection |
+| **Semantic Search** | pgvector-powered similarity search using local MiniLM embeddings (384-dim, no API costs) |
+| **Background Processing** | Async queue via ARQ + Redis with automatic sync fallback |
+| **Admin System** | Role-based access control, full audit logging, admin dashboard with Recharts analytics |
+| **Database Design** | PostgreSQL with SQLAlchemy ORM, pgvector extension, RLS policies |
+| **Authentication** | Supabase Auth with custom JWT + RLS policy enforcement |
+| **UI/UX** | Dark theme with glassmorphism, loading skeletons, responsive layouts |
+| **Deployment** | Vercel (frontend), Render (backend), Supabase (database), Docker containerized |
 
 ---
 

@@ -6,7 +6,7 @@ An AI-powered document processing system that ingests scanned documents/PDFs, ex
 
 ---
 
-## Architecture — Deployed
+## Architecture — Deployed (Vercel + Render + Supabase)
 
 ```
                     ┌─────────────────────────────────────┐
@@ -191,15 +191,16 @@ E:\Github\lio-ai-project\
 - Responsive charts via Recharts
 - Admin: Quick Actions section, stat cards, pagination
 
-### Phase 7 — Deployment — In Progress
+### ✅ Phase 7 — Deployment — COMPLETED
 
 - [x] Dockerfile for Render
 - [x] render.yaml with env vars
 - [x] vercel.json for frontend
 - [x] Pushed to GitHub (main branch)
 - [x] RLS policies created for all tables
-- [ ] Deploy backend to Render
-- [ ] Deploy frontend to Vercel
+- [x] Backend deployed to Render
+- [x] Frontend deployed to Vercel
+- [x] CORS configured for production
 
 ---
 
@@ -237,19 +238,18 @@ ADMIN_EMAIL=singajiyu10@gmail.com
 
 ---
 
-## What This Portfolio Shows Recruiters
+## Project Highlights
 
-| Skill | Evidence in Project |
-|---|---|
-| Full-stack dev | React frontend + FastAPI backend |
-| AI/LLM integration | OpenAI GPT-4o-mini classification + field extraction |
-| OCR pipeline | Tesseract + PyMuPDF with confidence scoring |
-| Async processing | ARQ + Redis background workers |
-| Vector search | pgvector semantic similarity search |
-| Admin systems | Role-based auth, audit logging, admin dashboard with charts |
-| UI/UX | Dark theme, glassmorphism, responsive charts |
-| Database design | SQLAlchemy ORM models with RLS policies |
-| Auth/security | Supabase Auth + custom JWT + RLS |
-| Cloud deployment | Vercel + Render + Supabase ready |
-| DevOps | Dockerfile, render.yaml, vercel.json, GitHub |
-| Architecture | Clean layered separation (API → Services → Workers) |
+| Skill | Demonstration |
+|-------|-------------|
+| **Full-Stack Architecture** | React + TypeScript frontend with FastAPI + Python backend |
+| **AI/LLM Integration** | OpenAI GPT-4o-mini for document classification and structured field extraction with per-field confidence scoring |
+| **OCR Pipeline** | Dual-engine OCR (Tesseract for images, PyMuPDF for PDFs) with automatic format detection |
+| **Semantic Search** | pgvector-powered similarity search using local MiniLM embeddings (384-dim, no API costs) |
+| **Background Processing** | Async queue via ARQ + Redis with automatic sync fallback |
+| **Admin System** | Role-based access control, full audit logging, admin dashboard with Recharts analytics |
+| **Database Design** | PostgreSQL with SQLAlchemy ORM, pgvector extension, RLS policies |
+| **Authentication** | Supabase Auth with custom JWT + RLS policy enforcement |
+| **UI/UX** | Dark theme with glassmorphism, loading skeletons, responsive layouts |
+| **Deployment** | Vercel (frontend), Render (backend), Supabase (database), Docker containerized |
+| **Architecture** | Clean layered separation (API → Services → Workers) |
