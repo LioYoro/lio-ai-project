@@ -286,7 +286,7 @@ def admin_delete_document(
 
 
 @router.post("/documents/{document_id}/reprocess")
-def admin_reprocess_document(
+async def admin_reprocess_document(
     document_id: str,
     admin_user: User = Depends(require_admin),
     db: Session = Depends(get_db)
@@ -316,11 +316,10 @@ def admin_reprocess_document(
     
     # Enqueue processing
     from app.workers.document_worker import enqueue_document_processing
-    import asyncio
     try:
-        asyncio.create_task(enqueue_document_processing(document.id))
-    except:
+        await enqueue_document_processing(document.id)
+    except Exception as e:
         from app.workers.document_worker import process_document_task
-        asyncio.run(process_document_task(document.id))
+        await process_document_task(document.id)
     
     return {"message": "Reprocessing started", "document_id": document_id}
