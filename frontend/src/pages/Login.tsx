@@ -43,8 +43,8 @@ export const Login = () => {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl mb-8 shadow-lg shadow-blue-500/30">
             <Sparkles className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight w-full">LioYoro | Hikari Systems</h1>
-          <p className="text-slate-400 mt-4 text-lg w-full">DocFlow: AI Document Workflow Automation Platform</p>
+          <h1 className="text-3xl font-bold text-white tracking-tight w-full">DocFlow: AI Document Workflow Automation Platform</h1>
+          <p className="text-slate-400 mt-4 text-lg w-full">LioYoro | Hikari Systems</p>
         </div>
 
         <Card className="w-full max-w-md bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl shadow-slate-500/20">
