@@ -54,7 +54,7 @@ export const AdminDashboard = () => {
         <Navbar isLoggedIn={true} />
         <div className="flex flex-col items-center w-full px-16 py-20">
           <div className="w-full max-w-6xl">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 w-full">
               {[1,2,3,4].map(i => <StatsCardSkeleton key={i} />)}
             </div>
           </div>
@@ -90,22 +90,22 @@ export const AdminDashboard = () => {
       <Navbar isLoggedIn={true} />
 
       <div className="flex flex-col items-center w-full px-16 py-20">
-        <div className="text-center mb-20 w-full max-w-6xl">
+        <div className="text-center mb-24 w-full max-w-6xl">
           <div className="flex items-center justify-center gap-6 mb-6 w-full">
             <div className="h-1 w-20 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" />
             <span className="text-sm font-medium text-slate-400">Admin Panel</span>
             <div className="h-1 w-20 rounded-full bg-gradient-to-r from-blue-500 to-purple-500" />
           </div>
-          <h1 className="text-5xl font-bold text-white mb-6 w-full">Dashboard</h1>
+          <h1 className="text-5xl font-bold text-white mb-8 w-full">Dashboard</h1>
           <p className="text-slate-400 text-lg w-full">Overview of your document processing system</p>
         </div>
 
         <div className="w-full max-w-6xl">
-          <div className="mb-16 w-full">
+          <div className="mb-24 w-full">
             <h2 className="text-3xl font-semibold text-white mb-10 flex items-center gap-4 w-full">
               Quick Actions
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-10 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 w-full">
               <a href="/admin/documents" className="group flex items-center gap-8 p-12 rounded-2xl border-2 border-white/20 bg-white/10 hover:border-blue-400/50 hover:bg-white/20 transition-all w-full">
                 <div className="h-20 w-20 rounded-2xl bg-blue-500/30 flex items-center justify-center group-hover:bg-blue-500/50 transition-colors">
                   <FileText className="h-10 w-10 text-blue-400" />
@@ -138,14 +138,14 @@ export const AdminDashboard = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-16 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-24 w-full">
             <StatCard title="Total Documents" value={totalDocs} icon={FileText} color="#3b82f6" delay={0} />
             <StatCard title="Completed" value={completedDocs} icon={CheckCircle} color="#10b981" delay={100} />
             <StatCard title="Failed" value={failedDocs} icon={XCircle} color="#ef4444" delay={200} />
             <StatCard title="Pending" value={pendingDocs} icon={Clock} color="#f59e0b" delay={300} />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-16 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-24 w-full">
             <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-14 text-white shadow-lg shadow-purple-500/20 w-full">
               <div className="flex items-center justify-between w-full">
                 <div>
@@ -181,7 +181,7 @@ export const AdminDashboard = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-24 w-full">
             <Card className="border border-white/20 bg-white/10 backdrop-blur-xl rounded-2xl overflow-hidden w-full">
               <CardHeader className="pb-10 w-full">
                 <CardTitle className="flex items-center gap-3 text-xl font-semibold text-white w-full">
@@ -239,7 +239,7 @@ export const AdminDashboard = () => {
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-24 w-full">
             <Card className="border border-white/20 bg-white/10 backdrop-blur-xl rounded-2xl overflow-hidden w-full">
               <CardHeader className="pb-10 w-full">
                 <CardTitle className="flex items-center gap-3 text-xl font-semibold text-white w-full">
