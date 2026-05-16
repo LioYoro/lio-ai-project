@@ -3,7 +3,8 @@ import { useDocuments } from "../hooks/useDocuments";
 import { Navbar } from "../components/layout/Navbar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, FileText, RefreshCw, Eye, EyeOff } from "lucide-react";
+import { Upload, FileText, RefreshCw, Eye, EyeOff, ExternalLink } from "lucide-react";
+import apiClient from "../lib/api";
 
 const formatFieldValue = (value: any): string => {
   if (value === null || value === undefined) return "—";
@@ -59,6 +60,18 @@ export const Documents = () => {
 
   const handleViewDocument = (docId: string) => {
     setSelectedDoc(selectedDoc === docId ? null : docId);
+  };
+
+  const handleViewFile = async (docId: string) => {
+    try {
+      const response = await apiClient.get(`/api/documents/${docId}/file`, {
+        responseType: "blob",
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      window.open(url, "_blank");
+    } catch (error) {
+      console.error("Failed to load file:", error);
+    }
   };
 
   const statusColors: Record<string, string> = {
@@ -156,10 +169,18 @@ export const Documents = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-4">
                           <span className={`px-6 py-3 rounded-xl text-base font-medium ${statusColors[doc.status] || "bg-gray-500/20 text-gray-300"}`}>
                             {doc.status}
                           </span>
+                          <Button 
+                            size="sm"
+                            className="min-w-[130px] gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white border-0 h-12 px-6 justify-center shadow-lg shadow-emerald-500/25"
+                            onClick={() => handleViewFile(doc.id)}
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            View File
+                          </Button>
                           <Button 
                             variant="secondary" 
                             size="sm"
@@ -174,7 +195,7 @@ export const Documents = () => {
                             ) : (
                               <>
                                 <Eye className="w-4 h-4" />
-                                View
+                                View Details
                               </>
                             )}
                           </Button>

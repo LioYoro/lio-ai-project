@@ -10,7 +10,8 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { getAdminDocuments, deleteAdminDocument, reprocessAdminDocument, updateAdminDocument, AdminDocument } from "../lib/adminApi";
-import { Pencil, RotateCcw, Trash2, ChevronLeft, ChevronRight, FileText, Search, X, Check } from "lucide-react";
+import { Pencil, RotateCcw, Trash2, ChevronLeft, ChevronRight, FileText, Search, X, Check, ExternalLink } from "lucide-react";
+import apiClient from "../lib/api";
 
 const DOCUMENT_TYPES = ["invoice", "receipt", "contract", "report", "form", "other"];
 
@@ -63,6 +64,18 @@ export const AdminDocuments = () => {
 
   const handleEditSave = (id: string) => {
     updateMutation.mutate({ id, data: editData });
+  };
+
+  const handleViewFile = async (docId: string) => {
+    try {
+      const response = await apiClient.get(`/api/documents/${docId}/file`, {
+        responseType: "blob",
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      window.open(url, "_blank");
+    } catch (error) {
+      console.error("Failed to load file:", error);
+    }
   };
 
   const documents = data?.documents || [];
@@ -212,6 +225,9 @@ export const AdminDocuments = () => {
                             </>
                           ) : (
                             <>
+                              <Button size="sm" variant="outline" onClick={() => handleViewFile(doc.id)} className="hover:bg-emerald-50 hover:border-emerald-300 text-emerald-600">
+                                <ExternalLink className="h-3 w-3" />
+                              </Button>
                               <Button size="sm" variant="outline" onClick={() => handleEditStart(doc)} className="hover:bg-blue-50 hover:border-blue-300">
                                 <Pencil className="h-3 w-3" />
                               </Button>

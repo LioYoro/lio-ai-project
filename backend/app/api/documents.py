@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database import get_db
@@ -10,6 +11,7 @@ from app.services.audit_service import log_action
 from pathlib import Path
 import shutil
 import asyncio
+import mimetypes
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
 
@@ -145,6 +147,36 @@ def get_document(
         raise HTTPException(status_code=404, detail="Document not found")
     
     return document
+
+
+@router.get("/{document_id}/file")
+def download_document_file(
+    document_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Download the original uploaded file"""
+    document = db.query(Document).filter(
+        Document.id == document_id,
+        Document.owner_id == current_user.id
+    ).first()
+    
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    file_path = Path(document.file_path)
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found on disk")
+    
+    media_type, _ = mimetypes.guess_type(str(file_path))
+    if not media_type:
+        media_type = "application/octet-stream"
+    
+    return FileResponse(
+        path=str(file_path),
+        media_type=media_type,
+        filename=document.filename
+    )
 
 
 @router.delete("/{document_id}", status_code=204)
