@@ -4,7 +4,7 @@ An AI-powered document processing system that ingests scanned documents/PDFs, ex
 
 ---
 
-## Project Status: Deployed & Polished
+## Project Status: Polished
 
 **Last Updated:** May 16, 2026
 
