@@ -71,7 +71,7 @@ export const AdminDocuments = () => {
       const response = await apiClient.get(`/api/documents/${docId}/file`, {
         responseType: "blob",
       });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const url = window.URL.createObjectURL(response.data);
       window.open(url, "_blank");
     } catch (error) {
       console.error("Failed to load file:", error);
