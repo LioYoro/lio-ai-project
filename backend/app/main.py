@@ -4,9 +4,6 @@ from app.config import settings
 from app.database import Base, engine
 from app.api import auth, documents, search, workflows, admin
 
-# Create tables
-Base.metadata.create_all(bind=engine)
-
 # Initialize FastAPI app
 app = FastAPI(
     title="AI Document Workflow API",
@@ -39,7 +36,14 @@ def root():
 
 @app.on_event("startup")
 async def startup_event():
-    """Sync users from Supabase Auth to local DB on startup"""
+    """Create tables and sync users from Supabase Auth to local DB on startup"""
+    # Create tables (with retry)
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("Database tables created successfully")
+    except Exception as e:
+        print(f"Warning: Could not create database tables: {e}")
+    
     from app.dependencies import supabase
     from app.database import SessionLocal
     from app.models import User
